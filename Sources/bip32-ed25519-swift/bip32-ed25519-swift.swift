@@ -3,9 +3,6 @@ import Clibsodium
 import Foundation
 import BigInt
 import Foundation
-//import MessagePackSwift
-//import JSONSchema
-
 
 enum KeyContext: UInt32 {
     case Address = 0
@@ -93,7 +90,7 @@ public class Bip32Ed25519 {
         return kL + kR + c
     }
 
-    func derivedNonHardened(kl: Data, cc: Data, index: UInt32) -> (z: Data, childChainCode: Data) {
+    func deriveNonHardened(kl: Data, cc: Data, index: UInt32) -> (z: Data, childChainCode: Data) {
         var data = Data(count: 1 + 32 + 4)
         data[1 + 32] = UInt8(index & 0xFF)
 
@@ -111,8 +108,11 @@ public class Bip32Ed25519 {
 
     func deriveHardened(kl: Data, kr: Data, cc: Data, index: UInt32) -> (z: Data, childChainCode: Data) {
         var data = Data(count: 1 + 64 + 4)
-        data[1 + 64] = UInt8(index & 0xFF)
-
+        
+        var indexLE = index.littleEndian
+        let indexData = Data(bytes: &indexLE, count: MemoryLayout.size(ofValue: indexLE))
+        data.replaceSubrange(1 + 64..<1 + 64 + 4, with: indexData)
+        
         data.replaceSubrange(1..<1+kl.count, with: kl)
         data.replaceSubrange(1+kl.count..<1+kl.count+kr.count, with: kr)
 
@@ -125,13 +125,13 @@ public class Bip32Ed25519 {
         return (z, childChainCode)
     }
 
-    func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
+func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
         let kl = extendedKey.subdata(in: 0..<32)
         let kr = extendedKey.subdata(in: 32..<64)
         let cc = extendedKey.subdata(in: 64..<96)
 
         let (z, childChainCode) =
-            (index < 0x80000000) ? derivedNonHardened(kl: kl, cc: cc, index: index) : deriveHardened(kl: kl, kr: kr, cc: cc, index: index)
+            (index < 0x80000000) ? deriveNonHardened(kl: kl, cc: cc, index: index) : deriveHardened(kl: kl, kr: kr, cc: cc, index: index)
 
         let chainCode = childChainCode.subdata(in: 32..<64)
         let zl = z.subdata(in: 0..<32)
@@ -139,19 +139,26 @@ public class Bip32Ed25519 {
 
         // left = kl + 8 * trunc28(zl)
         // right = zr + kr
-        let left = BigInt(kl) + BigInt(zl.subdata(in: 0..<28)) * BigInt(8)
-        var right = BigInt(kr) + BigInt(zr)
+        let left = BigUInt(Data(kl.reversed())) + BigUInt(Data(zl.subdata(in: 0..<28).reversed())) * BigUInt(8)
+        let right = BigUInt(Data(kr.reversed())) + BigUInt(Data(zr.reversed()))
 
-        // just padding
-        if right.bitWidth / 8 < 32 {
-            right <<= 8
+        // Reverse byte order back after calculations
+        var leftData = Data(left.serialize().reversed())
+        var rightData = Data(right.serialize().reversed())
+
+        // Padding for left
+        leftData = Data(repeating: 0, count: 32 - leftData.count) + leftData
+
+        // Padding for right
+        if rightData.count > 32 {
+            rightData = rightData.subdata(in: 0..<32)
         }
+        rightData = rightData + Data(repeating: 0, count: 32 - rightData.count)
 
         var result = Data()
-        result.append(left.serialize())
-        result.append(right.serialize())
+        result.append(leftData)
+        result.append(rightData)
         result.append(chainCode)
-
         return result
     }
 
@@ -174,9 +181,7 @@ public class Bip32Ed25519 {
 
         derived = deriveChildNodePrivate(extendedKey: derived, index: bip44Path[4])
 
-        let scalar = derived.subdata(in: 0..<32) // scalar == pvtKey
-
-        return isPrivate ? scalar : SodiumHelper.scalarMultEd25519BaseNoClamp(scalar)
+        return isPrivate ? derived : SodiumHelper.scalarMultEd25519BaseNoClamp(derived.subdata(in: 0..<32))
     }
 
 
@@ -186,147 +191,5 @@ public class Bip32Ed25519 {
 
         return self.deriveKey(rootKey: rootKey, bip44Path: bip44Path, isPrivate: false)
     }
-
-
-    // TODO: Look into unifying the Sha512 hashing functions from CryptoKit and CommonCrypto (in CryptoUtils)
-    // func signData(context: KeyContext, account: Int, keyIndex: Int, data: Data, metadata: SignMetadata) throws -> Data {
-    func signData(context: KeyContext, account: UInt32, change: UInt32, keyIndex: UInt32, data: Data) throws -> Data {
-        // validate data
-        // let result = validateData(data: data, metadata: metadata)
-
-        // if result is Error { // decoding errors
-        //     throw result
-        // }
-
-        // if !result { // failed schema validation
-        //     throw NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : "Bad data"])
-        // }
-
-        let rootKey: Data = fromSeed(seed)
-        let bip44Path: [UInt32] = getBIP44PathFromContext(context: context, account: account, change: change, keyIndex: keyIndex)
-        let raw: Data = deriveKey(rootKey: rootKey, bip44Path: bip44Path, isPrivate: true)
-
-        let scalar = raw.subdata(in: 0..<32)
-        let c = raw.subdata(in: 32..<64)
-
-        // \(1): pubKey = scalar * G (base point, no clamp)
-        let publicKey = SodiumHelper.scalarMultEd25519BaseNoClamp(scalar)
-
-        // \(2): h = hash(c + msg) mod q
-        let hash = CryptoUtils.sha512(data: c + data)
-        let q = BigInt("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFED", radix: 16)
-        let rBigInt = BigInt(hash) % q!
-
-        // fill 32 bytes of r
-        // convert to Data
-        var r = Data(repeating: 0, count: 32)
-        let rBString = String(rBigInt, radix: 16).padding(toLength: 64, withPad: "0", startingAt: 0) // convert to hex
-
-        for i in 0..<32 {
-            let start = rBString.index(rBString.startIndex, offsetBy: i*2)
-            let end = rBString.index(start, offsetBy: 2)
-            let bytes = rBString[start..<end]
-            r[i] = UInt8(bytes, radix: 16)!
-        }
-
-        // \(4):  R = r * G (base point, no clamp)
-        let R = SodiumHelper.scalarMultEd25519BaseNoClamp(r)
-
-        var h = CryptoUtils.sha512(data: R + publicKey + data)
-        h = SodiumHelper.coreEd25519ScalarReduce(h)
-
-        // \(5): S = (r + h * k) mod q
-        let S = SodiumHelper.coreEd25519ScalarAdd(r: r, k: SodiumHelper.coreEd25519ScalarMul(h: h, scalar: scalar))
-
-        return R + S
-    }
-
-    private func hasAlgorandTags(message: Data) -> Bool {
-        // Check that decoded doesn't include the following prefixes: TX, MX, progData, Program
-        let tx = String(data: message[0...1], encoding: .ascii)
-        let mx = String(data: message[0...1], encoding: .ascii)
-        let progData = String(data: message[0...7], encoding: .ascii)
-        let program = String(data: message[0...6], encoding: .ascii)
-
-        return tx == "TX" || mx == "MX" || progData == "progData" || program == "Program"
-    }
-
-    func verifyWithPublicKey(signature: Data, message: Data, publicKey: Data) -> Bool {
-        return SodiumHelper.sodiumSignVerify(signature: signature, message: message, publicKey: publicKey)
-    }
-
-
-    // func ECDH(context: KeyContext, account: UInt32, change: UInt32, keyIndex: UInt32, otherPartyPub: Data) async throws -> Data {
-
-    //     guard let rootKey = fromSeed(self.seed) as Data? else {
-    //         throw NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : "Invalid seed"])
-    //     }
-
-    //     let bip44Path = GetBIP44PathFromContext(context: context, account: account, change: change, keyIndex: keyIndex)
-        
-    //     guard let childKey = self.deriveKey(rootKey: rootKey, bip44Path: bip44Path, hardened: true) else {
-    //         throw NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : "Key derivation failed"])
-    //     }
-
-    //     let scalar = childKey[0..<32]
-
-        
-    //     SodiumHelper.cryptoCurve25519ScalarMult()
-
-    //     guard let otherPartyPubCurve25519 = sodium.sign.pkToCurve25519(ed25519Pk: otherPartyPub),
-    //         let sharedSecret = sodium.scalarmult.base(n: scalar, p: otherPartyPubCurve25519) else {
-    //         throw NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : "Scalar multiplication failed"])
-    //     }
-
-    //     return sharedSecret
-    // }
-
-
-
-    // private func validateData(message: Data, metadata: SignMetadata) throws -> Bool {
-    //     // Check that decoded doesn't include the following prefixes: TX, MX, progData, Program
-    //     // These prefixes are reserved for the protocol
-
-    //     if self.hasAlgorandTags(message: message) {
-    //         throw NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : ERROR_TAGS_FOUND])
-    //     }
-
-    //     let decoded: Data
-    //     switch metadata.encoding {
-    //     case .base64:
-    //         guard let messageString = String(data: message, encoding: .utf8),
-    //             let data = Data(base64Encoded: messageString) else {
-    //             throw NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : "Invalid base64"])
-    //         }
-    //         decoded = data
-    //     case .msgpack:
-    //         decoded = try MessagePackSerialization.unpack(message)
-    //     case .none:
-    //         decoded = message
-    //     default:
-    //         throw NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : "Invalid encoding"])
-    //     }
-
-    //     // Check after decoding too
-    //     // Some one might try to encode a regular transaction with the protocol reserved prefixes
-    //     if self.hasAlgorandTags(message: decoded) {
-    //         throw NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : ERROR_TAGS_FOUND])
-    //     }
-
-    //     // validate with schema
-    //     guard let decodedString = String(data: decoded, encoding: .utf8),
-    //         let decodedJson = try? JSONSerialization.jsonObject(with: Data(decodedString.utf8), options: []) as? [String: Any],
-    //         let schema = try? JSONSchema(metadata.schema),
-    //         let report = try? schema.validate(decodedJson) else {
-    //         throw NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : "Invalid JSON or schema"])
-    //     }
-
-    //     if !report.isValid {
-    //         print(report.errors)
-    //     }
-
-    //     return report.isValid
-    // }
-
 }
 
