@@ -220,28 +220,18 @@ func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
         let publicKey: Data = SodiumHelper.scalarMultEd25519BaseNoClamp(scalar)
 
         // \(2): r = hash(c + msg) mod q [LE]
-        let r = safeModQ(input: CryptoUtils.sha512(data: c + message))
+        let r = SodiumHelper.cryptoCoreEd25519ScalarReduce(CryptoUtils.sha512(data: c + message))
 
         // \(3):  R = r * G (base point, no clamp)
         let R = SodiumHelper.scalarMultEd25519BaseNoClamp(r)
 
         // \(4): S = (r + h * k) mod q
-        let h = safeModQ(input: CryptoUtils.sha512(data: R + publicKey + message))
+        let h = SodiumHelper.cryptoCoreEd25519ScalarReduce(CryptoUtils.sha512(data: R + publicKey + message))
 
         let mulResult = Data(SodiumHelper.cryptoCoreEd25519ScalarMul(h, scalar))
         let S = SodiumHelper.cryptoCoreEd25519ScalarAdd(r, mulResult)
         
         return R + S
-    }
-
-    func safeModQ(input: Data) -> Data {
-        let reducedInput = Data(SodiumHelper.cryptoCoreEd25519ScalarReduce(input))
-        var reduced: Data = Data(reducedInput)
-        
-        if (reduced.count < 32) {
-            reduced = reduced + Data(repeating:0 , count: 32 - reduced.count)
-        }
-        return reduced
     }
 
     public func signAlgoTransaction(context: KeyContext, account: UInt32, change: UInt32, keyIndex: UInt32, prefixEncodedTx: Data) -> Data {

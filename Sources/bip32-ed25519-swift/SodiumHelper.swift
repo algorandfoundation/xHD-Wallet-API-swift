@@ -19,7 +19,6 @@ import Sodium
 import Clibsodium
 import Foundation
 
-
 public struct SodiumHelper {
 
     public static let ED25519_SCALAR_SIZE = 32
