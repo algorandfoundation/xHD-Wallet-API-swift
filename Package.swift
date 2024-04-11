@@ -30,10 +30,9 @@ let package = Package(
             dependencies: [
                 .product(name: "Sodium", package: "swift-sodium-full"),
                 .product(name: "BigInt", package: "BigInt"),
-                .product(name: "MnemonicSwift", package: "MnemonicSwift"),
                 ]),
         .testTarget(
             name: "bip32-ed25519-swiftTests",
-            dependencies: ["bip32-ed25519-swift"]),
+            dependencies: ["bip32-ed25519-swift", .product(name: "MnemonicSwift", package: "MnemonicSwift")]),
     ]
 )
