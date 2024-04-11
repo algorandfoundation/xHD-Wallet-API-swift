@@ -21,6 +21,19 @@ Now you can generate keys using a BIP-44 derivation path:
 let pk = c.keyGen(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0)
 ```
 
+To sign an Algorand transaction, you can use the signAlgoTransaction.
+
+```swift
+let prefixEncodedTx = Data(base64Encoded: "VFiJo2FtdM0D6KNmZWXNA+iiZnbOAkeSd6NnZW6sdGVzdG5ldC12MS4womdoxCBIY7UYpLPITsgQ8i1PEIHLD3HwWaesIN7GL39w5Qk6IqJsds4CR5Zfo3JjdsQgYv6DK3rRBUS+gzemcENeUGSuSmbne9eJCXZbRrV2pvOjc25kxCBi/oMretEFRL6DN6ZwQ15QZK5KZud714kJdltGtXam86R0eXBlo3BheQ==")
+let sig = c.signAlgoTransaction(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0, prefixEncodedTx: prefixEncodedTx)
+```
+
+Where prefixEncodedTx is a transaction that has been compiled with the SDK's transaction builder. The signature returned can be verified against the public key:
+
+```swift
+c.verifyWithPublicKey(signature: sig, message: prefixEncodedTx, publicKey: pk)
+```
+
 ## License
 
 Copyright 2024 Algorand Foundation

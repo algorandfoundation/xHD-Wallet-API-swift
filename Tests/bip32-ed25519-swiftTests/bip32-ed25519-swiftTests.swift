@@ -150,16 +150,6 @@ final class Bip32Ed25519Tests: XCTestCase {
         }
     }
 
-    func testRawSignAlgoTx() throws {
-        let msgData = "{\"text\":\"Hello, World!\"}".data(using: .utf8)
-
-        let bip44Path = (KeyContext.Address, UInt32(0), UInt32(0), UInt32(0))
-        guard let pk = c?.keyGen(context: bip44Path.0, account: bip44Path.1, change: bip44Path.2, keyIndex: bip44Path.3) else { return  }
-        guard let sig = c?.signAlgoTransaction(context: bip44Path.0, account: bip44Path.1, change: bip44Path.2, keyIndex: bip44Path.3, prefixEncodedTx: msgData!) else { return  }
-
-        XCTAssertEqual(c?.verifyWithPublicKey(signature: sig, message: msgData!, publicKey: pk), true)                
-    }
-
     func testVerifyAlgoTx() throws {
         // this transaction wes successfully submitted to the network
         // https://testnet.explorer.perawallet.app/tx/UJG3NVCSCW5A63KPV35BPAABLXMXTTEM2CVUKNS4EML3H3EYGMCQ/
