@@ -21,7 +21,7 @@ import Foundation
 import BigInt
 import Foundation
 
-enum KeyContext: UInt32 {
+public enum KeyContext: UInt32 {
     case Address = 0
     case Identity = 1
 }
@@ -53,7 +53,7 @@ extension Data {
 
 public class Bip32Ed25519 {
 
-    var seed: Data
+    private var seed: Data
 
     // Overloaded initializer that accepts a seed
     public init?(seed: Data) {
@@ -207,6 +207,50 @@ func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
         let bip44Path: [UInt32] = getBIP44PathFromContext(context: context, account: account, change: change, keyIndex: keyIndex)
 
         return self.deriveKey(rootKey: rootKey, bip44Path: bip44Path, isPrivate: false)
+    }
+
+    private func rawSign(bip44Path: [UInt32], message: Data) -> Data {
+        let rootKey: Data = fromSeed(self.seed)
+        let raw: Data = deriveKey(rootKey: rootKey, bip44Path: bip44Path, isPrivate: true)
+        
+        let scalar = raw.subdata(in: 0..<32)
+        let c = raw.subdata(in: 32..<64)
+
+        // \(1): pubKey = scalar * G (base point, no clamp)
+        let publicKey: Data = SodiumHelper.scalarMultEd25519BaseNoClamp(scalar)
+
+        // \(2): r = hash(c + msg) mod q [LE]
+        let r = safeModQ(input: CryptoUtils.sha512(data: c + message))
+
+        // \(3):  R = r * G (base point, no clamp)
+        let R = SodiumHelper.scalarMultEd25519BaseNoClamp(r)
+
+        // \(4): S = (r + h * k) mod q
+        let h = safeModQ(input: CryptoUtils.sha512(data: R + publicKey + message))
+
+        let mulResult = Data(SodiumHelper.cryptoCoreEd25519ScalarMul(h, scalar))
+        let S = SodiumHelper.cryptoCoreEd25519ScalarAdd(r, mulResult)
+        
+        return R + S
+    }
+
+    func safeModQ(input: Data) -> Data {
+        let reducedInput = Data(SodiumHelper.cryptoCoreEd25519ScalarReduce(input))
+        var reduced: Data = Data(reducedInput)
+        
+        if (reduced.count < 32) {
+            reduced = reduced + Data(repeating:0 , count: 32 - reduced.count)
+        }
+        return reduced
+    }
+
+    public func signAlgoTransaction(context: KeyContext, account: UInt32, change: UInt32, keyIndex: UInt32, prefixEncodedTx: Data) -> Data {
+        let bip44Path: [UInt32] = getBIP44PathFromContext(context: context, account: account, change: change, keyIndex: keyIndex)
+        return rawSign(bip44Path: bip44Path, message: prefixEncodedTx)
+    }
+
+    public func verifyWithPublicKey(signature: Data, message: Data, publicKey: Data) -> Bool {
+        return SodiumHelper.cryptoSignVerifyDetached(signature, message,publicKey)
     }
 }
 
