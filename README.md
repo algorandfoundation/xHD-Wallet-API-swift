@@ -1,6 +1,8 @@
-# ed25519-bip32-swift
+# BIP32-Ed25519-Swift
 
-Swift implementation of BIP32 Ed25519
+A Swift implementation of ARC-0052 Algorand, in accordance with the paper BIP32-Ed25519 Hierarchical Deterministic Keys over a Non-linear Keyspace.
+
+Note that this library has not undergone audit and is not recommended for production use.
 
 ## Generating Keys
 
