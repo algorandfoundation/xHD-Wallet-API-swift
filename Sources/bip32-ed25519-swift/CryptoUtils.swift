@@ -52,8 +52,6 @@ public struct CryptoUtils {
     }
 
     public static func sha512_256(data: Data) -> Data {
-        // let hash = sha512(data: data)
-        // return hash[..<32]  // Take the first 32 bytes
         return Data(SHA512_256.init().hash([UInt8](data)))
     }
 
