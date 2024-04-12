@@ -2,7 +2,7 @@
 
 A Swift implementation of ARC-0052 Algorand, in accordance with the paper BIP32-Ed25519 Hierarchical Deterministic Keys over a Non-linear Keyspace.
 
-Note that this library has not undergone audit and is not recommended for production use.
+Note that this library has not undergone audit and is NOT recommended for production use.
 
 ## Generating Keys
 
