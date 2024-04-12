@@ -11,6 +11,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Set up LibSodium
+        run: |
+          sudo apt-get install -y pkg-config libsodium-dev
+
       - name: Install Swift
         uses: swift-actions/setup-swift@v2
         with:
