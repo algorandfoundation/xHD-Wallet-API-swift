@@ -52,4 +52,50 @@ public struct SodiumHelper {
         let result = Data(resultArray!)
         return result
     }
+
+    public static func cryptoCoreEd25519ScalarReduce(_ input: Data) -> Data {
+        var output = [UInt8](repeating: 0, count: ED25519_SCALAR_SIZE)
+        output.withUnsafeMutableBufferPointer { outputPtr in
+            input.withUnsafeBytes { inputPtr in
+                crypto_core_ed25519_scalar_reduce(outputPtr.baseAddress!, inputPtr.baseAddress!)
+            }
+        }
+        return Data(output)
+    }
+
+    public static func cryptoCoreEd25519ScalarAdd(_ x: Data, _ y: Data) -> Data {
+        var output = [UInt8](repeating: 0, count: ED25519_SCALAR_SIZE)
+        output.withUnsafeMutableBufferPointer { outputPtr in
+            x.withUnsafeBytes { xPtr in
+                y.withUnsafeBytes { yPtr in
+                    crypto_core_ed25519_scalar_add(outputPtr.baseAddress!, xPtr.baseAddress!, yPtr.baseAddress!)
+                }
+            }
+        }
+        return Data(output)
+    }
+
+    public static func cryptoCoreEd25519ScalarMul(_ x: Data, _ y: Data) -> Data {
+        var output = [UInt8](repeating: 0, count: ED25519_SCALAR_SIZE)
+        output.withUnsafeMutableBufferPointer { outputPtr in
+            x.withUnsafeBytes { xPtr in
+                y.withUnsafeBytes { yPtr in
+                    crypto_core_ed25519_scalar_mul(outputPtr.baseAddress!, xPtr.baseAddress!, yPtr.baseAddress!)
+                }
+            }
+        }
+        return Data(output)
+    }
+
+    public static func cryptoSignVerifyDetached(_ signature: Data, _ message: Data, _ publicKey: Data) -> Bool {
+        var result: Int32 = -1
+        signature.withUnsafeBytes { signaturePtr in
+            message.withUnsafeBytes { messagePtr in
+                publicKey.withUnsafeBytes { publicKeyPtr in
+                    result = crypto_sign_verify_detached(signaturePtr.baseAddress!, messagePtr.baseAddress!, UInt64(message.count), publicKeyPtr.baseAddress!)
+                }
+            }
+        }
+        return result == 0
+    }
 }
