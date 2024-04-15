@@ -98,4 +98,30 @@ public struct SodiumHelper {
         }
         return result == 0
     }
+
+    public static func convertPublicKeyEd25519ToCurve25519 (_ publicKey: Data) -> Data {
+        var curve25519_pk = [UInt8](repeating: 0, count: 32)
+        publicKey.withUnsafeBytes { ed25519_pk in
+            crypto_sign_ed25519_pk_to_curve25519(&curve25519_pk, ed25519_pk.baseAddress!)
+        }
+        return Data(curve25519_pk)
+    }
+
+    public static func cryptoX25519ScalarMult(scalar: Data, point: Data) -> Data {
+        var q = [UInt8](repeating: 0, count: 32)
+        scalar.withUnsafeBytes { n in
+            point.withUnsafeBytes { p in
+                crypto_scalarmult(&q, n.baseAddress!, p.baseAddress!)
+            }
+        }
+        return Data(q)
+    }
+
+    public static func cryptoGenericHash(input: Data, outputLength: Int) -> Data {
+        var out = [UInt8](repeating: 0, count: outputLength)
+        input.withUnsafeBytes { inPtr in
+                crypto_generichash(&out, out.count, inPtr.baseAddress!, UInt64(input.count), nil, 0)
+        }
+        return Data(out)
+    }
 }

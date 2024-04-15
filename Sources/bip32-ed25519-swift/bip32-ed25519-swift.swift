@@ -242,5 +242,22 @@ func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
     public func verifyWithPublicKey(signature: Data, message: Data, publicKey: Data) -> Bool {
         return SodiumHelper.cryptoSignVerifyDetached(signature, message,publicKey)
     }
+
+    public func ECDH(context: KeyContext, account: UInt32, change: UInt32, keyIndex: UInt32, otherPartyPub: Data, meFirst: Bool) -> Data {
+        let rootKey = fromSeed(self.seed)
+        let publicKey = keyGen(context: context, account: account, change: change, keyIndex: keyIndex)
+        let privateKey = deriveKey(rootKey: rootKey, bip44Path: getBIP44PathFromContext(context: context, account: account, change: change, keyIndex: keyIndex), isPrivate: true)
+        let scalar = privateKey.subdata(in: 0..<32)
+
+        let myX25519Pub = SodiumHelper.convertPublicKeyEd25519ToCurve25519(publicKey)
+        let otherX25519Pub = SodiumHelper.convertPublicKeyEd25519ToCurve25519(otherPartyPub)
+        let sharedPoint = SodiumHelper.cryptoX25519ScalarMult(scalar: scalar, point: otherX25519Pub)
+
+        let concatenated = meFirst ? sharedPoint + myX25519Pub + otherX25519Pub : sharedPoint + otherX25519Pub + myX25519Pub
+
+        let sharedSecret = SodiumHelper.cryptoGenericHash(input: concatenated, outputLength: 32)
+        
+        return sharedSecret
+    }
 }
 
