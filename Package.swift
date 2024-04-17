@@ -21,6 +21,7 @@ let package = Package(
         .package(url: "https://github.com/algorandfoundation/swift-sodium-full.git", branch:("master")),
         .package(url: "https://github.com/attaswift/BigInt.git", from: "5.2.1"),
         .package(url: "https://github.com/Electric-Coin-Company/MnemonicSwift.git", from: "2.2.4"),
+        .package(url: "https://github.com/kylef/JSONSchema.swift.git", revision: "8c7ec156dde09715d8d2ed83cc8fe6b1ba90648c")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -30,9 +31,12 @@ let package = Package(
             dependencies: [
                 .product(name: "Sodium", package: "swift-sodium-full"),
                 .product(name: "BigInt", package: "BigInt"),
+                .product(name: "JSONSchema", package: "JSONSchema.swift"),
                 ]),
         .testTarget(
             name: "bip32-ed25519-swiftTests",
-            dependencies: ["bip32-ed25519-swift", .product(name: "MnemonicSwift", package: "MnemonicSwift")]),
+            dependencies: ["bip32-ed25519-swift",
+                .product(name: "MnemonicSwift", package: "MnemonicSwift"),
+                ]),
     ]
 )

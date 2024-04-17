@@ -18,6 +18,7 @@
 import XCTest
 @testable import bip32_ed25519_swift
 import MnemonicSwift
+import JSONSchema
 
 final class Bip32Ed25519Tests: XCTestCase {
     var c: Bip32Ed25519?
@@ -161,5 +162,25 @@ final class Bip32Ed25519Tests: XCTestCase {
 
         XCTAssertEqual(c?.verifyWithPublicKey(signature: sig, message: prefixEncodedTx!, publicKey: pk), true)                
         XCTAssertEqual(try CryptoUtils.encodeAddress(bytes: pk), "ML7IGK322ECUJPUDG6THAQ26KBSK4STG4555PCIJOZNUNNLWU3Z3ZFXITA")
+    }
+
+    func testValidateDataAuthRequest() throws {
+        let schemaFilePath = URL(fileURLWithPath: #file).deletingLastPathComponent().appendingPathComponent("schemas/auth.request.json")
+        let schemaData = try Data(contentsOf: schemaFilePath)
+        let schema = try JSONSerialization.jsonObject(with: schemaData, options: []) as! [String: Any]
+
+        let challengeJSON = """
+        {
+            "0": 28, "1": 103, "2": 26, "3": 222, "4": 7, "5": 86, "6": 55, "7": 95, 
+            "8": 197, "9": 179, "10": 249, "11": 252, "12": 232, "13": 252, "14": 176,
+            "15": 39, "16": 112, "17": 131, "18": 52, "19": 63, "20": 212, "21": 58,
+            "22": 226, "23": 89, "24": 64, "25": 94, "26": 23, "27": 91, "28": 128,
+            "29": 143, "30": 123, "31": 27,
+        }
+        """
+
+        let result = try c?.validateData(data: Data(challengeJSON.utf8), metadata: SignMetadata(encoding: Encoding.none, schema: schema))
+        
+        XCTAssert(result!)
     }
 }

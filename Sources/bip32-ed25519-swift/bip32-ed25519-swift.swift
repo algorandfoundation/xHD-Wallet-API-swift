@@ -20,17 +20,30 @@ import Clibsodium
 import Foundation
 import BigInt
 import Foundation
+import JSONSchema
 
 public enum KeyContext: UInt32 {
     case Address = 0
     case Identity = 1
 }
 
-enum Encoding {
+public enum Encoding {
     // case cbor
     case msgpack
     case base64
     case none
+}
+
+class DataValidationException: Error {
+    var message: String
+    init(message: String) {
+        self.message = message
+    }
+}
+
+public struct SignMetadata {
+    var encoding: Encoding
+    var schema: [String: Any] // Assuming JSONSchema is a type you've defined elsewhere
 }
 
 extension Data {
@@ -241,6 +254,33 @@ func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
 
     public func verifyWithPublicKey(signature: Data, message: Data, publicKey: Data) -> Bool {
         return SodiumHelper.cryptoSignVerifyDetached(signature, message,publicKey)
+    }
+
+    public func validateData(data: Data, metadata: SignMetadata) throws -> Bool {
+        // Validate data based on the schema
+        switch metadata.encoding {
+            case .base64:
+                // Decoe base64
+                return false
+            case .msgpack:
+                // Decode msgpack
+                return false
+            case .none:
+                   let valid = try JSONSchema.validate(try JSONSerialization.jsonObject(with: data, options: []) as! [String: Any], schema: metadata.schema)
+                   return valid.valid
+        }
+    }
+
+    public func signData(context: KeyContext, account: UInt32, change: UInt32, keyIndex: UInt32, data: Data, metadata: SignMetadata) throws -> Data {
+
+        let valid = try validateData(data: data, metadata: metadata)
+
+        if !valid{
+            throw DataValidationException(message: "Data is not valid")
+        }
+
+        let bip44Path: [UInt32] = getBIP44PathFromContext(context: context, account: account, change: change, keyIndex: keyIndex)
+        return rawSign(bip44Path: bip44Path, message: data)
     }
 }
 
