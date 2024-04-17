@@ -21,6 +21,7 @@ let package = Package(
         .package(url: "https://github.com/algorandfoundation/swift-sodium-full.git", branch:("master")),
         .package(url: "https://github.com/attaswift/BigInt.git", from: "5.2.1"),
         .package(url: "https://github.com/Electric-Coin-Company/MnemonicSwift.git", from: "2.2.4"),
+        .package(url: "https://github.com/norio-nomura/Base32.git", from: "0.9.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -33,6 +34,9 @@ let package = Package(
                 ]),
         .testTarget(
             name: "bip32-ed25519-swiftTests",
-            dependencies: ["bip32-ed25519-swift", .product(name: "MnemonicSwift", package: "MnemonicSwift")]),
+            dependencies: ["bip32-ed25519-swift",
+                .product(name: "MnemonicSwift", package: "MnemonicSwift"),
+                .product(name: "Base32", package: "Base32"),
+                ]),
     ]
 )
