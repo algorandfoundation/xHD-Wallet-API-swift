@@ -1,5 +1,6 @@
 import Foundation
 import Base32
+import MessagePack
 
 public struct TestUtils {
     public static func sha512_256(data: Data) -> Data {
@@ -26,5 +27,4 @@ public struct TestUtils {
         }
         return res
     }
-
 }

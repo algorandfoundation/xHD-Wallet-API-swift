@@ -21,6 +21,7 @@ import Foundation
 import BigInt
 import Foundation
 import JSONSchema
+import MessagePack
 
 public enum KeyContext: UInt32 {
     case Address = 0
@@ -256,23 +257,49 @@ func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
         return SodiumHelper.cryptoSignVerifyDetached(signature, message,publicKey)
     }
 
+    func hasAlgorandTags(data: Data) -> Bool {
+        // Prefixes taken from go-algorand node software code
+        // https://github.com/algorand/go-algorand/blob/master/protocol/hash.go
+
+        let prefixes = ["appID", "arc", "aB", "aD", "aO", "aP", "aS", "AS", "BH", "B256", "BR", "CR", "GE", "KP", "MA", "MB", "MX", "NIC", "NIR", "NIV", "NPR", "OT1", "OT2", "PF", "PL", "Program", "ProgData", "PS", "PK", "SD", "SpecialAddr", "STIB", "spc", "spm", "spp", "sps", "spv", "TE", "TG", "TL", "TX", "VO"]
+        let prefixBytes = prefixes.map { $0.data(using: .ascii)! }
+        return prefixBytes.contains { data.starts(with: $0) }
+    }
+
     public func validateData(data: Data, metadata: SignMetadata) throws -> Bool {
+
+        if hasAlgorandTags(data: data) {
+            return false
+        }
+
         // Validate data based on the schema
+        var rawData: Data
         switch metadata.encoding {
             case .base64:
-                // Decoe base64
-                return false
+                guard let string = String(data: data, encoding: .utf8),
+                    let base64Data = Data(base64Encoded: string) else {
+                    return false
+                }
+                rawData = base64Data
             case .msgpack:
-                // Decode msgpack
-                return false
+                do {
+                    rawData = try JSONSerialization.data(withJSONObject: messagePackValueToSwift(try MessagePack.unpack(data).value), options: [])
+                } catch {
+                    return false
+                }
             case .none:
-                   let valid = try JSONSchema.validate(try JSONSerialization.jsonObject(with: data, options: []) as! [String: Any], schema: metadata.schema)
-                   return valid.valid
+                rawData = data
+        }
+
+        do {
+            let valid = try JSONSchema.validate(try JSONSerialization.jsonObject(with: rawData, options: []) as! [String: Any], schema: metadata.schema)
+            return valid.valid
+        } catch {
+            return false
         }
     }
 
     public func signData(context: KeyContext, account: UInt32, change: UInt32, keyIndex: UInt32, data: Data, metadata: SignMetadata) throws -> Data {
-
         let valid = try validateData(data: data, metadata: metadata)
 
         if !valid{
@@ -282,5 +309,36 @@ func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
         let bip44Path: [UInt32] = getBIP44PathFromContext(context: context, account: account, change: change, keyIndex: keyIndex)
         return rawSign(bip44Path: bip44Path, message: data)
     }
+
+    func messagePackValueToSwift(_ value: MessagePackValue) -> Any {
+        switch value {
+            case .nil:
+                return NSNull()
+            case .bool(let bool):
+                return bool
+            case .int(let int):
+                return int
+            case .uint(let uint):
+                return uint
+            case .float(let float):
+                return float
+            case .double(let double):
+                return double
+            case .string(let string):
+                return string
+            case .binary(let data):
+                return data
+            case .array(let array):
+                return array.compactMap { messagePackValueToSwift($0) }
+            case .map(let dict):
+                return dict.reduce(into: [String: Any]()) { result, pair in
+                    if let key = pair.key.stringValue {
+                        result[key] = messagePackValueToSwift(pair.value)
+                    }
+                }
+            case .extended(let type, let data):
+                return ["type": type, "data": data]
+            }
+        }
 }
 

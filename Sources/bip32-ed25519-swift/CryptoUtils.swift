@@ -17,6 +17,7 @@
 
 import CryptoKit
 import Foundation
+import MessagePack
 
 public struct CryptoUtils {
     public static func sha512(data: Data) -> Data {

@@ -19,6 +19,11 @@ import XCTest
 @testable import bip32_ed25519_swift
 import MnemonicSwift
 import JSONSchema
+import MessagePack
+
+enum MyError: Error {
+    case expectedError
+}
 
 final class Bip32Ed25519Tests: XCTestCase {
     var c: Bip32Ed25519?
@@ -169,18 +174,249 @@ final class Bip32Ed25519Tests: XCTestCase {
         let schemaData = try Data(contentsOf: schemaFilePath)
         let schema = try JSONSerialization.jsonObject(with: schemaData, options: []) as! [String: Any]
 
-        let challengeJSON = """
+        let challengeJSON = ["""
         {
             "0": 28, "1": 103, "2": 26, "3": 222, "4": 7, "5": 86, "6": 55, "7": 95, 
             "8": 197, "9": 179, "10": 249, "11": 252, "12": 232, "13": 252, "14": 176,
             "15": 39, "16": 112, "17": 131, "18": 52, "19": 63, "20": 212, "21": 58,
             "22": 226, "23": 89, "24": 64, "25": 94, "26": 23, "27": 91, "28": 128,
-            "29": 143, "30": 123, "31": 27,
+            "29": 143, "30": 123, "31": 27
         }
-        """
+        """,
+        "eyIwIjogMjgsICIxIjogMTAzLCAiMiI6IDI2LCAiMyI6IDIyMiwgIjQiOiA3LCAiNSI6IDg2LCAiNiI6IDU1LCAiNyI6IDk1LCAiOCI6IDE5NywgIjkiOiAxNzksICIxMCI6IDI0OSwgIjExIjogMjUyLCAiMTIiOiAyMzIsICIxMyI6IDI1MiwgIjE0IjogMTc2LCAiMTUiOiAzOSwgIjE2IjogMTEyLCAiMTciOiAxMzEsICIxOCI6IDUyLCAiMTkiOiA2MywgIjIwIjogMjEyLCAiMjEiOiA1OCwiMjIiOiAyMjYsICIyMyI6IDg5LCAiMjQiOiA2NCwgIjI1IjogOTQsICIyNiI6IDIzLCAiMjciOiA5MSwgIjI4IjogMTI4LCAiMjkiOiAxNDMsICIzMCI6IDEyMywgIjMxIjogMjd9",
+        "de0020a1301ca13167a1321aa133ccdea13407a13556a13637a1375fa138ccc5a139ccb3a23130ccf9a23131ccfca23132cce8a23133ccfca23134ccb0a2313527a2313670a23137cc83a2313834a231393fa23230ccd4a232313aa23232cce2a2323359a2323440a232355ea2323617a232375ba23238cc80a23239cc8fa233307ba233311b",
+        ]
 
-        let result = try c?.validateData(data: Data(challengeJSON.utf8), metadata: SignMetadata(encoding: Encoding.none, schema: schema))
-        
+        let result = try c?.validateData(data: Data(challengeJSON[0].utf8), metadata: SignMetadata(encoding: Encoding.none, schema: schema))
         XCTAssert(result!)
+
+        let resultB64 = try c?.validateData(data: Data(challengeJSON[1].utf8), metadata: SignMetadata(encoding: Encoding.base64, schema: schema))
+        XCTAssert(resultB64!)
+
+        let resultMsgP = try c?.validateData(data: Data(hexString: String(challengeJSON[2].utf8))!,metadata: SignMetadata(encoding: Encoding.msgpack, schema: schema))
+        XCTAssert(resultMsgP!)
+
+        let challengeJSONBad = [
+            [
+            """
+            {
+                "0": 28, "1": 103, "2": 26, "3": 222, "4": 7, "5": 86, "6": 55, "7": 95, 
+                "8": 197, "9": 179, "10": 249, "11": 252, "12": 232, "13": 252, "14": 176,
+                "15": 39, "16": 112, "17": 131, "18": 52, "19": 63, "20": 212, "21": 58,
+                "22": 226, "23": 89, "24": 64, "25": 94, "26": 23, "27": 91, "28": 128,
+                "29": 143, "30": 123, "30": 27
+            }
+            """,
+            "eyIwIjogMjgsICIxIjogMTAzLCAiMiI6IDI2LCAiMyI6IDIyMiwgIjQiOiA3LCAiNSI6IDg2LCAiNiI6IDU1LCAiNyI6IDk1LCAiOCI6IDE5NywgIjkiOiAxNzksICIxMCI6IDI0OSwgIjExIjogMjUyLCAiMTIiOiAyMzIsICIxMyI6IDI1MiwgIjE0IjogMTc2LCAiMTUiOiAzOSwgIjE2IjogMTEyLCAiMTciOiAxMzEsICIxOCI6IDUyLCAiMTkiOiA2MywgIjIwIjogMjEyLCAiMjEiOiA1OCwgIjIyIjogMjI2LCAiMjMiOiA4OSwgIjI0IjogNjQsICIyNSI6IDk0LCAiMjYiOiAyMywgIjI3IjogOTEsICIyOCI6IDEyOCwgIjI5IjogMTQzLCAiMzAiOiAxMjMsICIzMCI6IDI3fQ==",
+            "de001fa1301ca13167a1321aa133ccdea13407a13556a13637a1375fa138ccc5a139ccb3a23130ccf9a23131ccfca23132cce8a23133ccfca23134ccb0a2313527a2313670a23137cc83a2313834a231393fa23230ccd4a232313aa23232cce2a2323359a2323440a232355ea2323617a232375ba23238cc80a23239cc8fa233301b",
+            ],
+            [
+                    """
+            {
+                "0": 28, "1": 103, "2": 26, "3": 222, "4": 7, "5": 86, "6": 55, "7": 95, 
+                "8": 197, "9": 179, "10": 249, "11": 252, "12": 232, "13": 252, "14": 176,
+                "15": 39, "16": 112, "17": 131, "18": 52, "19": 63, "20": 212, "21": 58,
+                "22": 226, "23": 89, "24": 64, "25": 94, "26": 23, "27": 91, "28": 128,
+                "29": 143, "30": 123, "31": 999
+            }
+            """,
+            "eyIwIjogMjgsICIxIjogMTAzLCAiMiI6IDI2LCAiMyI6IDIyMiwgIjQiOiA3LCAiNSI6IDg2LCAiNiI6IDU1LCAiNyI6IDk1LCAiOCI6IDE5NywgIjkiOiAxNzksICIxMCI6IDI0OSwgIjExIjogMjUyLCAiMTIiOiAyMzIsICIxMyI6IDI1MiwgIjE0IjogMTc2LCAiMTUiOiAzOSwgIjE2IjogMTEyLCAiMTciOiAxMzEsICIxOCI6IDUyLCAiMTkiOiA2MywgIjIwIjogMjEyLCAiMjEiOiA1OCwgIjIyIjogMjI2LCAiMjMiOiA4OSwgIjI0IjogNjQsICIyNSI6IDk0LCAiMjYiOiAyMywgIjI3IjogOTEsICIyOCI6IDEyOCwgIjI5IjogMTQzLCAiMzAiOiAxMjMsICIzMSI6IDk5OX0",
+            "de0020a1301ca13167a1321aa133ccdea13407a13556a13637a1375fa138ccc5a139ccb3a23130ccf9a23131ccfca23132cce8a23133ccfca23134ccb0a2313527a2313670a23137cc83a2313834a231393fa23230ccd4a232313aa23232cce2a2323359a2323440a232355ea2323617a232375ba23238cc80a23239cc8fa233307ba23331cd03e7",
+            ],
+            ["""
+            {
+                "0": 28, "1": 103, "2": 26, "3": 222, "4": 7, "5": 86, "6": 55, "7": 95, 
+                "8": 197, "9": 179, "10": 249, "11": 252, "12": 232, "13": 252, "14": 176,
+                "15": 39, "16": 112, "17": 131, "18": 52, "19": 63, "20": 212, "21": 58,
+                "22": 226, "23": 89, "24": 64, "25": 94, "26": 23, "27": 91, "28": 128,
+                "29": 143, "30": 123, "31": 27, "32": 10
+            }
+            """,
+            "eyIwIjogMjgsICIxIjogMTAzLCAiMiI6IDI2LCAiMyI6IDIyMiwgIjQiOiA3LCAiNSI6IDg2LCAiNiI6IDU1LCAiNyI6IDk1LCAiOCI6IDE5NywgIjkiOiAxNzksICIxMCI6IDI0OSwgIjExIjogMjUyLCAiMTIiOiAyMzIsICIxMyI6IDI1MiwgIjE0IjogMTc2LCAiMTUiOiAzOSwgIjE2IjogMTEyLCAiMTciOiAxMzEsICIxOCI6IDUyLCAiMTkiOiA2MywgIjIwIjogMjEyLCAiMjEiOiA1OCwgIjIyIjogMjI2LCAiMjMiOiA4OSwgIjI0IjogNjQsICIyNSI6IDk0LCAiMjYiOiAyMywgIjI3IjogOTEsICIyOCI6IDEyOCwgIjI5IjogMTQzLCAiMzAiOiAxMjMsICIzMSI6IDI3LCAiMzIiOiAxMH0",
+            "de0021a1301ca13167a1321aa133ccdea13407a13556a13637a1375fa138ccc5a139ccb3a23130ccf9a23131ccfca23132cce8a23133ccfca23134ccb0a2313527a2313670a23137cc83a2313834a231393fa23230ccd4a232313aa23232cce2a2323359a2323440a232355ea2323617a232375ba23238cc80a23239cc8fa233307ba233311ba233320a",
+            ],
+            ["""
+            {
+                "0": 28, "1": 103, "2": 26, "3": 222, "4": 7, "5": 86, "6": 55, "7": 95, 
+                "8": 197, "9": 179, "10": 249, "11": 252, "12": 232, "13": 252, "14": 176,
+                "15": 39, "16": 112, "17": 131, "18": 52, "19": 63, "20": 212, "21": 58,
+                "22": 226, "23": 89, "24": 64, "25": 94, "26": 23, "27": 91, "28": 128,
+                "29": 143, "30": 123, "test": 27
+            }
+            """,
+            "eyIwIjogMjgsICIxIjogMTAzLCAiMiI6IDI2LCAiMyI6IDIyMiwgIjQiOiA3LCAiNSI6IDg2LCAiNiI6IDU1LCAiNyI6IDk1LCAiOCI6IDE5NywgIjkiOiAxNzksICIxMCI6IDI0OSwgIjExIjogMjUyLCAiMTIiOiAyMzIsICIxMyI6IDI1MiwgIjE0IjogMTc2LCAiMTUiOiAzOSwgIjE2IjogMTEyLCAiMTciOiAxMzEsICIxOCI6IDUyLCAiMTkiOiA2MywgIjIwIjogMjEyLCAiMjEiOiA1OCwgIjIyIjogMjI2LCAiMjMiOiA4OSwgIjI0IjogNjQsICIyNSI6IDk0LCAiMjYiOiAyMywgIjI3IjogOTEsICIyOCI6IDEyOCwgIjI5IjogMTQzLCAiMzAiOiAxMjMsICJ0ZXN0IjogMjd9",
+            "de0020a1301ca13167a1321aa133ccdea13407a13556a13637a1375fa138ccc5a139ccb3a23130ccf9a23131ccfca23132cce8a23133ccfca23134ccb0a2313527a2313670a23137cc83a2313834a231393fa23230ccd4a232313aa23232cce2a2323359a2323440a232355ea2323617a232375ba23238cc80a23239cc8fa233307ba4746573741b",
+            ],
+            ["""
+            {
+                "0": 28, "1": 103, "2": 26, "3": 222, "4": 7, "5": 86, "6": 55, "7": 95, 
+                "8": 197, "9": 179, "10": 249, "11": 252, "12": 232, "13": 252, "14": 176,
+                "15": 39, "16": 112, "17": 131, "18": 52, "19": 63, "20": 212, "21": 58,
+                "22": 226, "23": 89, "24": 64, "25": 94, "26": 23, "27": 91, "28": 128,
+                "29": 143, "30": 123, "31": a
+            }
+            """,
+            "eyIwIjogMjgsICIxIjogMTAzLCAiMiI6IDI2LCAiMyI6IDIyMiwgIjQiOiA3LCAiNSI6IDg2LCAiNiI6IDU1LCAiNyI6IDk1LCAiOCI6IDE5NywgIjkiOiAxNzksICIxMCI6IDI0OSwgIjExIjogMjUyLCAiMTIiOiAyMzIsICIxMyI6IDI1MiwgIjE0IjogMTc2LCAiMTUiOiAzOSwgIjE2IjogMTEyLCAiMTciOiAxMzEsICIxOCI6IDUyLCAiMTkiOiA2MywgIjIwIjogMjEyLCAiMjEiOiA1OCwgIjIyIjogMjI2LCAiMjMiOiA4OSwgIjI0IjogNjQsICIyNSI6IDk0LCAiMjYiOiAyMywgIjI3IjogOTEsICIyOCI6IDEyOCwgIjI5IjogMTQzLCAiMzAiOiAxMjMsICIzMSI6IGF9",
+            "a", // msgpack convertes cannot parse the bad JSON into msgpack
+            ],
+        ]
+
+        for challenge in challengeJSONBad {
+            let resultFail = try c?.validateData(data: Data(challenge[0].utf8), metadata: SignMetadata(encoding: Encoding.none, schema: schema))
+            XCTAssert(!resultFail!)
+
+            let resultB64Fail = try c?.validateData(data: Data(challenge[1].utf8), metadata: SignMetadata(encoding: Encoding.base64, schema: schema))
+            XCTAssert(!resultB64Fail!)
+
+            let resultMsgP = try c?.validateData(data: Data(hexString: String(challenge[2].utf8))!,metadata: SignMetadata(encoding: Encoding.msgpack, schema: schema))
+            XCTAssert(!resultMsgP!)
+        }
+    }
+
+    func testValidateDataMsgSchema() throws {
+        let schemaFilePath = URL(fileURLWithPath: #file).deletingLastPathComponent().appendingPathComponent("schemas/msg.schema.json")
+        let schemaData = try Data(contentsOf: schemaFilePath)
+        let schema = try JSONSerialization.jsonObject(with: schemaData, options: []) as! [String: Any]
+
+        let msgJSON = 
+        ["""
+        {"text":"Hello, World!"}
+        """,
+        "eyJ0ZXh0IjoiSGVsbG8sIFdvcmxkISJ9", // base64
+        "81a474657874ad48656c6c6f2c20576f726c6421", // msgpack
+        ]
+
+        let result = try c?.validateData(data: Data(msgJSON[0].utf8), metadata: SignMetadata(encoding: Encoding.none, schema: schema))
+        XCTAssert(result!)
+
+        let resultB64 = try c?.validateData(data: Data(msgJSON[1].utf8), metadata: SignMetadata(encoding: Encoding.base64, schema: schema))
+        XCTAssert(resultB64!)
+
+        let resultMsgP = try c?.validateData(data: Data(hexString: String(msgJSON[2].utf8))!,metadata: SignMetadata(encoding: Encoding.msgpack, schema: schema))
+        XCTAssert(resultMsgP!)
+
+        let msgJSONBad = [ // none, base64, msgpack
+        ["""
+        {"t":"Hello, World!"}
+        """,
+        "eyJ0IjoiSGVsbG8sIFdvcmxkISJ9",
+        "81a174ad48656c6c6f2c20576f726c6421",
+        ],
+        ["""
+        {"text":1}
+        """,
+        "eyJ0ZXh0IjoxfQ==",
+        "81a47465787401",
+        ],
+        ["""
+        {a:"Hello World"}
+        """,
+        "e2E6IkhlbGxvIFdvcmxkIn0",
+        "a", // msgpack convertes cannot parse the bad JSON into msgpack
+        ],
+        ]
+
+        for msg in msgJSONBad {
+            let result = try c?.validateData(data: Data(msg[0].utf8), metadata: SignMetadata(encoding: Encoding.none, schema: schema))
+            XCTAssert(!result!)
+
+            let resultB64 = try c?.validateData(data: Data(msg[1].utf8), metadata: SignMetadata(encoding: Encoding.base64, schema: schema))
+            XCTAssert(!resultB64!)
+
+            let resultMsgP = try c?.validateData(data: Data(hexString: String(msg[2].utf8))!,metadata: SignMetadata(encoding: Encoding.msgpack, schema: schema))
+            XCTAssert(!resultMsgP!)
+        }
+    
+    }
+
+    func testPrefixError() throws {
+        // Algorand transaction bytes
+        let txBytes = Data([84, 88, 138, 163, 97, 109, 116, 206, 0, 152, 150, 128, 163, 102, 101, 101, 205, 3, 232, 162, 102, 118, 1, 163, 103, 101, 110, 172, 100, 111, 99, 107, 101, 114, 110, 101, 116, 45, 118, 49, 162, 103, 104, 196, 32, 241, 58, 20, 104, 56, 57, 150, 147, 27, 180, 33, 136, 150, 19, 75, 8, 122, 48, 230, 57, 166, 3, 22, 66, 230, 213, 105, 153, 155, 59, 116, 186, 162, 108, 118, 205, 3, 233, 164, 110, 111, 116, 101, 196, 17, 116, 101, 115, 116, 32, 116, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 33, 163, 114, 99, 118, 196, 32, 5, 203, 108, 214, 116, 145, 109, 203, 70, 233, 152, 142, 138, 129, 38, 88, 243, 206, 29, 133, 166, 17, 142, 91, 181, 120, 56, 133, 132, 103, 116, 129, 163, 115, 110, 100, 196, 32, 71, 235, 237, 176, 141, 136, 126, 190, 43, 187, 124, 13, 136, 150, 5, 71, 243, 107, 143, 109, 238, 238, 131, 63, 179, 59, 91, 63, 6, 64, 197, 130, 164, 116, 121, 112, 101, 163, 112, 97, 121])
+        XCTAssert(c?.hasAlgorandTags(data: txBytes) == true)
+
+        // Contain illegal prefix
+        let msgsDoesHave = 
+        ["""
+        TX
+        {"text":"Hello, World!"}
+        """,
+        "VFiJo2FtdM0D6KNmZWXNA+iiZnbOAkeSd6NnZW6sdGVzdG5ldC12MS4womdoxCBIY7UYpLPITsgQ8i1PEIHLD3HwWaesIN7GL39w5Qk6IqJsds4CR5Zfo3JjdsQgYv6DK3rRBUS+gzemcENeUGSuSmbne9eJCXZbRrV2pvOjc25kxCBi/oMretEFRL6DN6ZwQ15QZK5KZud714kJdltGtXam86R0eXBlo3BheQ==", // base64
+        ]
+
+        let resultMX = c?.hasAlgorandTags(data: Data((msgsDoesHave[0]).utf8))
+        XCTAssert(resultMX!)
+
+        let resultMXB64 = c?.hasAlgorandTags(data: Data(base64Encoded: msgsDoesHave[1])!)
+        XCTAssert(resultMXB64!)
+
+        let resultMXMsgP = c?.hasAlgorandTags(data: Data("TX".utf8) + Data(hexString: String("81a474657874ad48656c6c6f2c20576f726c6421".utf8))!)
+        XCTAssert(resultMXMsgP!)
+
+
+        // Does not contain illegal prefix
+        let msgsDoesNotHave = 
+        ["""
+        {"text":"Hello, World!"}
+        """,
+        "eyJ0ZXh0IjoiSGVsbG8sIFdvcmxkISJ9", // base64
+        ]
+
+
+        let resultMXf = c?.hasAlgorandTags(data: Data((msgsDoesNotHave[0]).utf8))
+        XCTAssertFalse(resultMXf!)
+
+        let resultMXB64f = c?.hasAlgorandTags(data: Data(base64Encoded: msgsDoesNotHave[1])!)
+        XCTAssertFalse(resultMXB64f!)
+
+        let resultMXMsgPf = c?.hasAlgorandTags(data: Data(hexString: String("81a474657874ad48656c6c6f2c20576f726c6421".utf8))!)
+        XCTAssertFalse(resultMXMsgPf!)
+        
+
+    }
+
+    func testAuthReqSigning() throws {
+        let schemaFilePath = URL(fileURLWithPath: #file).deletingLastPathComponent().appendingPathComponent("schemas/auth.request.json")
+        let schemaData = try Data(contentsOf: schemaFilePath)
+        let schema = try JSONSerialization.jsonObject(with: schemaData, options: []) as! [String: Any]
+
+        let challengeJSON = ["""
+        {
+            "0": 28, "1": 103, "2": 26, "3": 222, "4": 7, "5": 86, "6": 55, "7": 95, 
+            "8": 197, "9": 179, "10": 249, "11": 252, "12": 232, "13": 252, "14": 176,
+            "15": 39, "16": 112, "17": 131, "18": 52, "19": 63, "20": 212, "21": 58,
+            "22": 226, "23": 89, "24": 64, "25": 94, "26": 23, "27": 91, "28": 128,
+            "29": 143, "30": 123, "31": 27
+        }
+        """,
+        "eyIwIjogMjgsICIxIjogMTAzLCAiMiI6IDI2LCAiMyI6IDIyMiwgIjQiOiA3LCAiNSI6IDg2LCAiNiI6IDU1LCAiNyI6IDk1LCAiOCI6IDE5NywgIjkiOiAxNzksICIxMCI6IDI0OSwgIjExIjogMjUyLCAiMTIiOiAyMzIsICIxMyI6IDI1MiwgIjE0IjogMTc2LCAiMTUiOiAzOSwgIjE2IjogMTEyLCAiMTciOiAxMzEsICIxOCI6IDUyLCAiMTkiOiA2MywgIjIwIjogMjEyLCAiMjEiOiA1OCwiMjIiOiAyMjYsICIyMyI6IDg5LCAiMjQiOiA2NCwgIjI1IjogOTQsICIyNiI6IDIzLCAiMjciOiA5MSwgIjI4IjogMTI4LCAiMjkiOiAxNDMsICIzMCI6IDEyMywgIjMxIjogMjd9",
+        "de0020a1301ca13167a1321aa133ccdea13407a13556a13637a1375fa138ccc5a139ccb3a23130ccf9a23131ccfca23132cce8a23133ccfca23134ccb0a2313527a2313670a23137cc83a2313834a231393fa23230ccd4a232313aa23232cce2a2323359a2323440a232355ea2323617a232375ba23238cc80a23239cc8fa233307ba233311b",
+        ]
+
+        let pubkey = c?.keyGen(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0)
+
+        let sig = try c?.signData(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0, data: Data(challengeJSON[0].utf8), metadata: SignMetadata(encoding: Encoding.none, schema: schema))
+        let result = c?.verifyWithPublicKey(signature: sig!, message: Data(challengeJSON[0].utf8), publicKey: pubkey!)
+        XCTAssert(result!)
+
+        let sigB64 = try c?.signData(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0, data: Data(challengeJSON[1].utf8), metadata: SignMetadata(encoding: Encoding.base64, schema: schema))
+        let resultB64 = c?.verifyWithPublicKey(signature: sigB64!, message: Data(challengeJSON[1].utf8), publicKey: pubkey!)
+        XCTAssert(resultB64!)
+
+        let sigMsgP = try c?.signData(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0, data: Data(hexString: String(challengeJSON[2].utf8))!, metadata: SignMetadata(encoding: Encoding.msgpack, schema: schema))
+        let resultMsgP = c?.verifyWithPublicKey(signature: sigMsgP!, message: Data(hexString: String(challengeJSON[2].utf8))!, publicKey: pubkey!)
+        XCTAssert(resultMsgP!)
+
+        // Check that the signatures are different
+        XCTAssert(sig != sigB64)
+        XCTAssert(sig != sigMsgP)
+        XCTAssert(sigB64 != sigMsgP)
+
+        // Incorrect data and encoding
+        do {
+            let _ = try c?.signData(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0, data: Data(challengeJSON[0].utf8), metadata: SignMetadata(encoding: Encoding.base64, schema: schema))
+            throw MyError.expectedError
+        } catch {
+                XCTAssert(true)
+        }
     }
 }
