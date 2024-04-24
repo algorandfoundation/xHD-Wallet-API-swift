@@ -34,13 +34,18 @@ let package = Package(
                 .product(name: "Sodium", package: "swift-sodium-full"),
                 .product(name: "BigInt", package: "BigInt"),
                 .product(name: "JSONSchema", package: "JSONSchema.swift"),
+                .product(name: "MessagePack", package: "MessagePack.swift")
                 ]),
         .testTarget(
             name: "bip32-ed25519-swiftTests",
             dependencies: ["bip32-ed25519-swift",
                 .product(name: "MnemonicSwift", package: "MnemonicSwift"),
                 .product(name: "Base32", package: "Base32"),
-                .product(name: "MessagePack", package: "MessagePack.swift")
-                ]),
+            ],
+            resources: [
+                .process("schemas/auth.request.json"),
+                .process("schemas/msg.schema.json")
+            ]
+        ),
     ]
 )
