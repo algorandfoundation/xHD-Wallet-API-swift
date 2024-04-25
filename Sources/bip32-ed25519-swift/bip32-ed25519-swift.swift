@@ -51,6 +51,8 @@ extension Data {
     }
 }
 
+let sharedSecretHashBufferSize = 32
+
 public class Bip32Ed25519 {
 
     private var seed: Data
@@ -255,7 +257,7 @@ func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
 
         let concatenated = meFirst ? sharedPoint + myX25519Pub + otherX25519Pub : sharedPoint + otherX25519Pub + myX25519Pub
 
-        let sharedSecret = SodiumHelper.cryptoGenericHash(input: concatenated, outputLength: 32)
+        let sharedSecret = SodiumHelper.cryptoGenericHash(input: concatenated, outputLength: sharedSecretHashBufferSize)
         
         return sharedSecret
     }
