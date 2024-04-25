@@ -19,7 +19,6 @@ import XCTest
 @testable import bip32_ed25519_swift
 import MnemonicSwift
 
-
 final class Bip32Ed25519Tests: XCTestCase {
     var c: Bip32Ed25519?
 
