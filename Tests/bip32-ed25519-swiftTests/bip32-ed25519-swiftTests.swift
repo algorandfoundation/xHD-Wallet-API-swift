@@ -20,14 +20,14 @@ import XCTest
 import MnemonicSwift
 
 
-final class Bip32Ed25519STests: XCTestCase {
+final class Bip32Ed25519Tests: XCTestCase {
     var c: Bip32Ed25519?
 
     override func setUpWithError() throws {
         let seed = try Mnemonic.deterministicSeedString(from: "salon zoo engage submit smile frost later decide wing sight chaos renew lizard rely canal coral scene hobby scare step bus leaf tobacco slice")
         c = Bip32Ed25519(seed: seed)
         guard c != nil else {
-            throw NSError(domain: "Bip32Ed25519STests", code: 1, userInfo: [NSLocalizedDescriptionKey: "Bip32Ed25519 not initialized"])
+            throw NSError(domain: "Bip32Ed25519Tests", code: 1, userInfo: [NSLocalizedDescriptionKey: "Bip32Ed25519 not initialized"])
         }
     }
 
