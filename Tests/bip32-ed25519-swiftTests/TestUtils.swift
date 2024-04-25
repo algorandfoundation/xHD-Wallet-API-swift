@@ -19,7 +19,6 @@ import Foundation
 import Sodium
 import Clibsodium
 import Base32
-import MessagePack
 
 public struct TestUtils {
     public static func cryptoSecretBoxEasy(cleartext: String, nonce: Data, symmetricKey: Data) -> Data {
