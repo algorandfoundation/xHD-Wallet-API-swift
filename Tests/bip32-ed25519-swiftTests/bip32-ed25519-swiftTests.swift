@@ -199,11 +199,11 @@ final class Bip32Ed25519Tests: XCTestCase {
         // Encrypt/Decrypt with shared secret
         let message = "Hello, World!"
         let nonce = Data([16,197,142,8,174,91,118,244,202,136,43,200,97,242,104,99,42,154,191,32,67,30,6,123])
-        let ciphertext = TestUtils.cryptoSecretBoxEasy(cleartext: message, nonce: nonce, sharedSecret: aliceSharedSecret!)
+        let ciphertext = TestUtils.cryptoSecretBoxEasy(cleartext: message, nonce: nonce, symmetricKey: aliceSharedSecret!)
         XCTAssertEqual(ciphertext, Data(hexString: "FB07303A391687989674F28A1A9B88FCA3D107227D87DADE662DFA3722"))
         XCTAssertEqual(ciphertext, Data([251,7,48,58,57,22,135,152,150,116,242,138,26,155,136,252,163,209,7,34,125,135,218,222,102,45,250,55,34]))
 
-        let cleartext = TestUtils.cryptoSecretBoxOpenEasy(ciphertext: ciphertext, nonce: nonce, sharedSecret: aliceSharedSecret!)
+        let cleartext = TestUtils.cryptoSecretBoxOpenEasy(ciphertext: ciphertext, nonce: nonce, symmetricKey: aliceSharedSecret!)
         XCTAssertEqual(cleartext, message)
     }
 }

@@ -21,25 +21,25 @@ import Clibsodium
 import Base32
 
 public struct TestUtils {
-    public static func cryptoSecretBoxEasy(cleartext: String, nonce: Data, sharedSecret: Data) -> Data {
+    public static func cryptoSecretBoxEasy(cleartext: String, nonce: Data, symmetricKey: Data) -> Data {
         guard let cleartextData = cleartext.data(using: .utf8) else { return Data() }
         var out = [UInt8](repeating: 0, count: cleartextData.count + Int(crypto_secretbox_MACBYTES))
         _ = cleartextData.withUnsafeBytes { inPtr in
             nonce.withUnsafeBytes { noncePtr in
-                sharedSecret.withUnsafeBytes { sharedSecretPtr in
-                    crypto_secretbox_easy(&out, inPtr.baseAddress!, UInt64(cleartextData.count), noncePtr.baseAddress!, sharedSecretPtr.baseAddress!)
+                symmetricKey.withUnsafeBytes { symmetricKeyPtr in
+                    crypto_secretbox_easy(&out, inPtr.baseAddress!, UInt64(cleartextData.count), noncePtr.baseAddress!, symmetricKeyPtr.baseAddress!)
                 }
             }
         }
         return Data(out)
     }
 
-    public static func cryptoSecretBoxOpenEasy(ciphertext: Data, nonce: Data, sharedSecret: Data) -> String {
+    public static func cryptoSecretBoxOpenEasy(ciphertext: Data, nonce: Data, symmetricKey: Data) -> String {
         var out = [UInt8](repeating: 0, count: ciphertext.count - Int(crypto_secretbox_MACBYTES))
         _ = ciphertext.withUnsafeBytes { cPtr in
             nonce.withUnsafeBytes { noncePtr in
-                sharedSecret.withUnsafeBytes { sharedSecretPtr in
-                    crypto_secretbox_open_easy(&out, cPtr.baseAddress!, UInt64(ciphertext.count), noncePtr.baseAddress!, sharedSecretPtr.baseAddress!)
+                symmetricKey.withUnsafeBytes { symmetricKeyPtr in
+                    crypto_secretbox_open_easy(&out, cPtr.baseAddress!, UInt64(ciphertext.count), noncePtr.baseAddress!, symmetricKeyPtr.baseAddress!)
                 }
             }
         }
