@@ -4,7 +4,7 @@ A Swift implementation of ARC-0052 Algorand, in accordance with the paper BIP32-
 
 Note that this library has NOT undergone audit and is NOT recommended for production use.
 
-## Generating Keys
+## How to Use
 
 To initialize a wallet (using MnemmonicSwift for BIP-39 support) from a seed phrase:
 
@@ -61,6 +61,14 @@ let challengeJSONB64 = "eyIwIjogMjgsICIxIjogMTAzLCAiMiI6IDI2LCAiMyI6IDIyMiwgIjQi
 let sig = c.signData(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0, data: data: Data(challengeJSONB64.utf8), metadata: SignMetadata(encoding: Encoding.base64, schema: schema))
 let result = c.verifyWithPublicKey(signature: sig, message: Data(challengeJSONB64.utf8), publicKey: pk)
 ```
+
+You can generate a shared secret with someone using ECDH. They will need to provide you with their Ed25519 public key, as provided by keyGen. You will also need to agree on an "order" of whose public key will be concatenated first and whose second.
+
+```swift
+let sharedSecret = c.ECDH(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0, otherPartyPub: otherPubKey, meFirst: true)
+```
+
+Note that under the hood the sharedSecret is calculated using x25519 form.
 
 ## License
 

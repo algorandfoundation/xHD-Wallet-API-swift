@@ -54,7 +54,6 @@ final class Bip32Ed25519Tests: XCTestCase {
         XCTAssertEqual(identityPath,  [UInt32](arrayLiteral: 2147483692, 2147483648, 2147483648, 0, 0));
     }
 
-
     func testDeriveNonHardened() throws {
 
         let kl = Data([168,186,128,2,137,34,217,252,250,5,92,120,174,222,85,181,197,117,188,216,213,165,49,104,237,244,95,54,217,236,143,70])
@@ -418,5 +417,49 @@ final class Bip32Ed25519Tests: XCTestCase {
         } catch {
                 XCTAssert(true)
         }
+    }
+
+    func testECDH() throws {
+        let aliceSeed = try Mnemonic.deterministicSeedString(from: "exact remain north lesson program series excess lava material second riot error boss planet brick rotate scrap army riot banner adult fashion casino bamboo")
+        let alice = Bip32Ed25519(seed: aliceSeed)
+        guard alice != nil else {
+            throw NSError(domain: "Bip32Ed25519ECDHTests", code: 1, userInfo: [NSLocalizedDescriptionKey: "Bip32Ed25519 not initialized"])
+        }
+
+        let bobSeed = try Mnemonic.deterministicSeedString(from: "identify length ranch make silver fog much puzzle borrow relax occur drum blue oval book pledge reunion coral grace lamp recall fever route carbon")
+        let bob = Bip32Ed25519(seed: bobSeed)
+        guard bob != nil else {
+            throw NSError(domain: "Bip32Ed25519ECDHTests", code: 1, userInfo: [NSLocalizedDescriptionKey: "Bip32Ed25519 not initialized"])
+        }
+
+        let aliceKey = alice?.keyGen(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0)
+        let bobKey = bob?.keyGen(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0)
+
+        let aliceSharedSecret = alice?.ECDH(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0, otherPartyPub: bobKey!, meFirst: true)
+        let bobSharedSecret = bob?.ECDH(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0, otherPartyPub: aliceKey!, meFirst: false)
+        
+        XCTAssertNotEqual(aliceKey, bobKey)
+        XCTAssertEqual(aliceSharedSecret,bobSharedSecret)
+        XCTAssertEqual(aliceSharedSecret, Data([202,114,20,173,185,153,18,48,253,145,160,157,145,158,198,130,178,172,151,129,183,110,32,107,75,135,244,221,110,246,66,127]))
+    
+        // Reverse concatenation order
+
+        let aliceSharedSecret2 = alice?.ECDH(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0, otherPartyPub: bobKey!, meFirst: false)
+        let bobSharedSecret2 = bob?.ECDH(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0, otherPartyPub: aliceKey!, meFirst: true)
+        
+        XCTAssertNotEqual(aliceSharedSecret, aliceSharedSecret2)
+        XCTAssertNotEqual(bobSharedSecret, bobSharedSecret2)
+        XCTAssertEqual(aliceSharedSecret2, bobSharedSecret2)
+        XCTAssertEqual(aliceSharedSecret2, Data([90,215,114,148,204,139,215,147,233,41,219,196,163,237,229,68,134,255,92,129,181,253,137,142,191,244,101,46,252,253,250,26]))
+
+        // Encrypt/Decrypt with shared secret
+        let message = "Hello, World!"
+        let nonce = Data([16,197,142,8,174,91,118,244,202,136,43,200,97,242,104,99,42,154,191,32,67,30,6,123])
+        let ciphertext = TestUtils.cryptoSecretBoxEasy(cleartext: message, nonce: nonce, symmetricKey: aliceSharedSecret!)
+        XCTAssertEqual(ciphertext, Data(hexString: "FB07303A391687989674F28A1A9B88FCA3D107227D87DADE662DFA3722"))
+        XCTAssertEqual(ciphertext, Data([251,7,48,58,57,22,135,152,150,116,242,138,26,155,136,252,163,209,7,34,125,135,218,222,102,45,250,55,34]))
+
+        let cleartext = TestUtils.cryptoSecretBoxOpenEasy(ciphertext: ciphertext, nonce: nonce, symmetricKey: aliceSharedSecret!)
+        XCTAssertEqual(cleartext, message)
     }
 }
