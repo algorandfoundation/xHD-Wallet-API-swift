@@ -52,6 +52,7 @@ extension Data {
 }
 
 let sharedSecretHashBufferSize = 32
+let ED25519_SCALAR_SIZE = 32
 
 public class Bip32Ed25519 {
 
@@ -86,14 +87,14 @@ public class Bip32Ed25519 {
     func fromSeed(_ seed: Data) -> Data {
         // k = H512(seed)
         var k = CryptoUtils.sha512(data: seed)
-        var kL = k.subdata(in: 0..<32)
-        var kR = k.subdata(in: 32..<64)
+        var kL = k.subdata(in: 0..<ED25519_SCALAR_SIZE)
+        var kR = k.subdata(in: ED25519_SCALAR_SIZE..<2*ED25519_SCALAR_SIZE)
 
         // While the third highest bit of the last byte of kL is not zero
         while kL[31] & 0b00100000 != 0 {
             k = CryptoUtils.hmacSha512(key: kL, data: kR)
-            kL = k.subdata(in: 0..<32)
-            kR = k.subdata(in: 32..<64)
+            kL = k.subdata(in: 0..<ED25519_SCALAR_SIZE)
+            kR = k.subdata(in: ED25519_SCALAR_SIZE..<2*ED25519_SCALAR_SIZE)
         }
 
         // clamp
@@ -110,8 +111,8 @@ public class Bip32Ed25519 {
     }
 
     func deriveNonHardened(kl: Data, cc: Data, index: UInt32) -> (z: Data, childChainCode: Data) {
-        var data = Data(count: 1 + 32 + 4)
-        data[1 + 32] = UInt8(index & 0xFF)
+        var data = Data(count: 1 + ED25519_SCALAR_SIZE + 4)
+        data[1 + ED25519_SCALAR_SIZE] = UInt8(index & 0xFF)
 
         let pk = SodiumHelper.scalarMultEd25519BaseNoClamp(kl)
         data.replaceSubrange(1..<1+pk.count, with: pk)
@@ -126,11 +127,11 @@ public class Bip32Ed25519 {
     }
 
     func deriveHardened(kl: Data, kr: Data, cc: Data, index: UInt32) -> (z: Data, childChainCode: Data) {
-        var data = Data(count: 1 + 64 + 4)
+        var data = Data(count: 1 + 2*ED25519_SCALAR_SIZE + 4)
         
         var indexLE = index.littleEndian
         let indexData = Data(bytes: &indexLE, count: MemoryLayout.size(ofValue: indexLE))
-        data.replaceSubrange(1 + 64..<1 + 64 + 4, with: indexData)
+        data.replaceSubrange(1 + 2*ED25519_SCALAR_SIZE..<1 + 2*ED25519_SCALAR_SIZE + 4, with: indexData)
         
         data.replaceSubrange(1..<1+kl.count, with: kl)
         data.replaceSubrange(1+kl.count..<1+kl.count+kr.count, with: kr)
@@ -145,16 +146,16 @@ public class Bip32Ed25519 {
     }
 
 func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
-        let kl = extendedKey.subdata(in: 0..<32)
-        let kr = extendedKey.subdata(in: 32..<64)
-        let cc = extendedKey.subdata(in: 64..<96)
+        let kl = extendedKey.subdata(in: 0..<ED25519_SCALAR_SIZE)
+        let kr = extendedKey.subdata(in: ED25519_SCALAR_SIZE..<2*ED25519_SCALAR_SIZE)
+        let cc = extendedKey.subdata(in: 2*ED25519_SCALAR_SIZE..<3*ED25519_SCALAR_SIZE)
 
         let (z, childChainCode) =
             (index < 0x80000000) ? deriveNonHardened(kl: kl, cc: cc, index: index) : deriveHardened(kl: kl, kr: kr, cc: cc, index: index)
 
-        let chainCode = childChainCode.subdata(in: 32..<64)
-        let zl = z.subdata(in: 0..<32)
-        let zr = z.subdata(in: 32..<64)
+        let chainCode = childChainCode.subdata(in: ED25519_SCALAR_SIZE..<2*ED25519_SCALAR_SIZE)
+        let zl = z.subdata(in: 0..<ED25519_SCALAR_SIZE)
+        let zr = z.subdata(in: ED25519_SCALAR_SIZE..<2*ED25519_SCALAR_SIZE)
 
         // left = kl + 8 * trunc28(zl)
         // right = zr + kr
@@ -166,13 +167,13 @@ func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
         var rightData = Data(right.serialize().reversed())
 
         // Padding for left
-        leftData = Data(repeating: 0, count: 32 - leftData.count) + leftData
+        leftData = Data(repeating: 0, count: ED25519_SCALAR_SIZE - leftData.count) + leftData
 
         // Padding for right
-        if rightData.count > 32 {
-            rightData = rightData.subdata(in: 0..<32)
+        if rightData.count > ED25519_SCALAR_SIZE {
+            rightData = rightData.subdata(in: 0..<ED25519_SCALAR_SIZE)
         }
-        rightData = rightData + Data(repeating: 0, count: 32 - rightData.count)
+        rightData = rightData + Data(repeating: 0, count: ED25519_SCALAR_SIZE - rightData.count)
 
         var result = Data()
         result.append(leftData)
@@ -200,7 +201,7 @@ func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
 
         derived = deriveChildNodePrivate(extendedKey: derived, index: bip44Path[4])
 
-        return isPrivate ? derived : SodiumHelper.scalarMultEd25519BaseNoClamp(derived.subdata(in: 0..<32))
+        return isPrivate ? derived : SodiumHelper.scalarMultEd25519BaseNoClamp(derived.subdata(in: 0..<ED25519_SCALAR_SIZE))
     }
 
 
@@ -215,8 +216,8 @@ func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
         let rootKey: Data = fromSeed(self.seed)
         let raw: Data = deriveKey(rootKey: rootKey, bip44Path: bip44Path, isPrivate: true)
         
-        let scalar = raw.subdata(in: 0..<32)
-        let c = raw.subdata(in: 32..<64)
+        let scalar = raw.subdata(in: 0..<ED25519_SCALAR_SIZE)
+        let c = raw.subdata(in: ED25519_SCALAR_SIZE..<2*ED25519_SCALAR_SIZE)
 
         // \(1): pubKey = scalar * G (base point, no clamp)
         let publicKey: Data = SodiumHelper.scalarMultEd25519BaseNoClamp(scalar)
@@ -249,7 +250,7 @@ func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
         let rootKey = fromSeed(self.seed)
         let publicKey = keyGen(context: context, account: account, change: change, keyIndex: keyIndex)
         let privateKey = deriveKey(rootKey: rootKey, bip44Path: getBIP44PathFromContext(context: context, account: account, change: change, keyIndex: keyIndex), isPrivate: true)
-        let scalar = privateKey.subdata(in: 0..<32)
+        let scalar = privateKey.subdata(in: 0..<ED25519_SCALAR_SIZE)
 
         let myX25519Pub = SodiumHelper.convertPublicKeyEd25519ToCurve25519(publicKey)
         let otherX25519Pub = SodiumHelper.convertPublicKeyEd25519ToCurve25519(otherPartyPub)
