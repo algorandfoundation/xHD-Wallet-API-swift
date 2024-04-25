@@ -100,7 +100,7 @@ public struct SodiumHelper {
     }
 
     public static func convertPublicKeyEd25519ToCurve25519 (_ publicKey: Data) -> Data {
-        var curve25519_pk = [UInt8](repeating: 0, count: 32)
+        var curve25519_pk = [UInt8](repeating: 0, count: ED25519_POINT_SIZE)
         _ = publicKey.withUnsafeBytes { ed25519_pk in
             crypto_sign_ed25519_pk_to_curve25519(&curve25519_pk, ed25519_pk.baseAddress!)
         }
@@ -108,7 +108,7 @@ public struct SodiumHelper {
     }
 
     public static func cryptoX25519ScalarMult(scalar: Data, point: Data) -> Data {
-        var q = [UInt8](repeating: 0, count: 32)
+        var q = [UInt8](repeating: 0, count: ED25519_POINT_SIZE)
         _ = scalar.withUnsafeBytes { n in
             point.withUnsafeBytes { p in
                 crypto_scalarmult(&q, n.baseAddress!, p.baseAddress!)
