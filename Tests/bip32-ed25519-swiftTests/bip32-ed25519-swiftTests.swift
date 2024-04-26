@@ -351,6 +351,9 @@ final class Bip32Ed25519Tests: XCTestCase {
         let resultMXMsgP = c?.hasAlgorandTags(data: Data("TX".utf8) + Data(hexString: String("81a474657874ad48656c6c6f2c20576f726c6421".utf8))!)
         XCTAssert(resultMXMsgP!)
 
+        // prepend "appID" in hexadecimal
+        let resultMXMsgP2 = c?.hasAlgorandTags(data: Data(hexString: String("6170704944".utf8) + String("81a474657874ad48656c6c6f2c20576f726c6421".utf8))!)
+        XCTAssert(resultMXMsgP2!)
 
         // Does not contain illegal prefix
         let msgsDoesNotHave = 

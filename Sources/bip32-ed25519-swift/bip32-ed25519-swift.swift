@@ -313,6 +313,9 @@ func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
         return rawSign(bip44Path: bip44Path, message: data)
     }
 
+    // Function to convert MessagePackValue to Swift types.
+    // In particular, the .map case is relevant for transforming a JSON object encoded into MessagePack
+    // into a valid Swift representation that can be checked against a JSON schema validator.
     func messagePackValueToSwift(_ value: MessagePackValue) -> Any {
         switch value {
             case .nil:
