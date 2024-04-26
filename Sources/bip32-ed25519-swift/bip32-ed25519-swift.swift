@@ -159,7 +159,7 @@ public class Bip32Ed25519 {
         return (z, childChainCode)
     }
 
-func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
+    func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
         let kl = extendedKey.subdata(in: 0..<ED25519_SCALAR_SIZE)
         let kr = extendedKey.subdata(in: ED25519_SCALAR_SIZE..<2*ED25519_SCALAR_SIZE)
         let cc = extendedKey.subdata(in: 2*ED25519_SCALAR_SIZE..<3*ED25519_SCALAR_SIZE)
@@ -275,12 +275,12 @@ func deriveChildNodePrivate(extendedKey: Data, index: UInt32) -> Data {
             return false
         }
 
-        // Validate data based on the schema
+        // Transform encoded data into the "raw" data format
         var rawData: Data
         switch metadata.encoding {
             case .base64:
-                guard let string = String(data: data, encoding: .utf8),
-                    let base64Data = Data(base64Encoded: string) else {
+                guard let base64String = String(data: data, encoding: .utf8),
+                    let base64Data = Data(base64Encoded: base64String) else {
                     return false
                 }
                 rawData = base64Data
