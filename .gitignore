@@ -91,3 +91,4 @@ iOSInjectionProject/
 
 # IDE
 .vscode/
+.swiftpm

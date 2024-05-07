@@ -23,6 +23,6 @@ jobs:
         run: swift test --enable-code-coverage
 
       - name: Produce LCOV Report
-        uses: hashmapsdata2value/spm-lcov-action@0.1.0
+        uses: hashmapsdata2value/spm-lcov-action@0.1.1
         with:
           output-file: ./coverage/lcov.info
