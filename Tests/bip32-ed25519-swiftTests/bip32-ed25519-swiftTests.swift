@@ -415,6 +415,15 @@ final class Bip32Ed25519Tests: XCTestCase {
         }
     }
 
+    func testSchema() throws{
+        // Successfully loads
+        _ = try Schema(filePath: String("Tests/bip32-ed25519-swiftTests/schemas/auth.request.json"))
+        _ = try Schema(filePath: String("Tests/bip32-ed25519-swiftTests/schemas/msg.schema.json"))
+
+        // Malformed schema
+        XCTAssertThrowsError(try Schema(filePath: String("Tests/bip32-ed25519-swiftTests/schemas/malformed.json")))
+    }
+
     func testECDH() throws {
         let aliceSeed = try Mnemonic.deterministicSeedString(from: "exact remain north lesson program series excess lava material second riot error boss planet brick rotate scrap army riot banner adult fashion casino bamboo")
         let alice = Bip32Ed25519(seed: aliceSeed)
