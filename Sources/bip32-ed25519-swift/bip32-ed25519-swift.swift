@@ -42,9 +42,20 @@ class DataValidationException: Error {
     }
 }
 
+public struct Schema {
+    var jsonSchema: [String: Any]
+
+    init(filePath: String) throws {
+        let url = URL(fileURLWithPath: filePath)
+        let data = try Data(contentsOf: url)
+        let jsonSchema = try JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
+        self.jsonSchema = jsonSchema
+    }
+}
+
 public struct SignMetadata {
     var encoding: Encoding
-    var schema: [String: Any] // Assuming JSONSchema is a type you've defined elsewhere
+    var schema: Schema // Assuming JSONSchema is a type you've defined elsewhere
 }
 
 extension Data {
@@ -295,7 +306,7 @@ public class Bip32Ed25519 {
         }
 
         do {
-            let valid = try JSONSchema.validate(try JSONSerialization.jsonObject(with: rawData, options: []) as! [String: Any], schema: metadata.schema)
+            let valid = try JSONSchema.validate(try JSONSerialization.jsonObject(with: rawData, options: []) as! [String: Any], schema: metadata.schema.jsonSchema)
             return valid.valid
         } catch {
             return false

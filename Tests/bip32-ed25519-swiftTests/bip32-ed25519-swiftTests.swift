@@ -18,7 +18,6 @@
 import XCTest
 @testable import bip32_ed25519_swift
 import MnemonicSwift
-import JSONSchema
 import MessagePack
 
 enum MyError: Error {
@@ -169,9 +168,7 @@ final class Bip32Ed25519Tests: XCTestCase {
     }
 
     func testValidateDataAuthRequest() throws {
-        let schemaFilePath = URL(fileURLWithPath: #file).deletingLastPathComponent().appendingPathComponent("schemas/auth.request.json")
-        let schemaData = try Data(contentsOf: schemaFilePath)
-        let schema = try JSONSerialization.jsonObject(with: schemaData, options: []) as! [String: Any]
+        let schema = try Schema(filePath: "Tests/bip32-ed25519-swiftTests/schemas/auth.request.json")
 
         let challengeJSON = ["""
         {
@@ -273,9 +270,7 @@ final class Bip32Ed25519Tests: XCTestCase {
     }
 
     func testValidateDataMsgSchema() throws {
-        let schemaFilePath = URL(fileURLWithPath: #file).deletingLastPathComponent().appendingPathComponent("schemas/msg.schema.json")
-        let schemaData = try Data(contentsOf: schemaFilePath)
-        let schema = try JSONSerialization.jsonObject(with: schemaData, options: []) as! [String: Any]
+        let schema = try Schema(filePath: "Tests/bip32-ed25519-swiftTests/schemas/msg.schema.json")
 
         let msgJSON = 
         ["""
@@ -377,9 +372,7 @@ final class Bip32Ed25519Tests: XCTestCase {
     }
 
     func testAuthReqSigning() throws {
-        let schemaFilePath = URL(fileURLWithPath: #file).deletingLastPathComponent().appendingPathComponent("schemas/auth.request.json")
-        let schemaData = try Data(contentsOf: schemaFilePath)
-        let schema = try JSONSerialization.jsonObject(with: schemaData, options: []) as! [String: Any]
+        let schema = try Schema(filePath: "Tests/bip32-ed25519-swiftTests/schemas/auth.request.json")
 
         let challengeJSON = ["""
         {
