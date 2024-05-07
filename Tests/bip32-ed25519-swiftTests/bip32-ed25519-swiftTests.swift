@@ -416,7 +416,7 @@ final class Bip32Ed25519Tests: XCTestCase {
     }
 
     func testSchema() throws{
-        // Successfully loads
+        // Should successfully load
         _ = try Schema(filePath: String("Tests/bip32-ed25519-swiftTests/schemas/auth.request.json"))
         _ = try Schema(filePath: String("Tests/bip32-ed25519-swiftTests/schemas/msg.schema.json"))
 

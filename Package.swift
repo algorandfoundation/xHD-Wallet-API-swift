@@ -44,7 +44,8 @@ let package = Package(
             ],
             resources: [
                 .process("schemas/auth.request.json"),
-                .process("schemas/msg.schema.json")
+                .process("schemas/msg.schema.json"),
+                .process("schemas/malformed.json")
             ]
         ),
     ]
