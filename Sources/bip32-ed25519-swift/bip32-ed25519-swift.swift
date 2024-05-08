@@ -55,7 +55,7 @@ public struct Schema {
 
 public struct SignMetadata {
     var encoding: Encoding
-    var schema: Schema // Assuming JSONSchema is a type you've defined elsewhere
+    var schema: Schema
 }
 
 extension Data {
@@ -117,6 +117,7 @@ public class Bip32Ed25519 {
 
         // While the third highest bit of the last byte of kL is not zero
         while kL[31] & 0b00100000 != 0 {
+            print([UInt8](seed))
             k = CryptoUtils.hmacSha512(key: kL, data: kR)
             kL = k.subdata(in: 0..<ED25519_SCALAR_SIZE)
             kR = k.subdata(in: ED25519_SCALAR_SIZE..<2*ED25519_SCALAR_SIZE)
@@ -281,7 +282,6 @@ public class Bip32Ed25519 {
     }
 
     public func validateData(data: Data, metadata: SignMetadata) throws -> Bool {
-
         if hasAlgorandTags(data: data) {
             return false
         }

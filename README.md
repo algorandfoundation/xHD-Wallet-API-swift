@@ -37,10 +37,10 @@ let result = c.verifyWithPublicKey(signature: sig, message: prefixEncodedTx, pub
 
 It is also possible to sign arbitrary data. You need to specify a JSON scehma and encoding type (none, base64, msgpack).
 
-For example (with schema under "schemas/auth.request.json"):
+For example (with schema under "schemas/auth.request.json" in the Tests folder):
 
 ```swift
-let schema = try JSONSerialization.jsonObject(with: try Data(contentsOf: URL(fileURLWithPath: #file).deletingLastPathComponent().appendingPathComponent("schemas/auth.request.json")), options: []) as! [String: Any]
+let schema = Schema("auth.request.json")
 let challengeJSON = """
     {
         "0": 28, "1": 103, "2": 26, "3": 222, "4": 7, "5": 86, "6": 55, "7": 95,
