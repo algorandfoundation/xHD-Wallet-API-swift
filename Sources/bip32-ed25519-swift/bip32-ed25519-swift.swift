@@ -83,11 +83,6 @@ public class Bip32Ed25519 {
 
     private var seed: Data
 
-    // Overloaded initializer that accepts a seed
-    public init?(seed: Data) throws {
-        self.seed = seed
-    }
-
     public init?(seed: String) {
         guard let data = Data(hexString: seed) else {
             return nil
