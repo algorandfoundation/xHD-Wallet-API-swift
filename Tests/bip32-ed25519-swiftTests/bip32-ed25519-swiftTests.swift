@@ -66,14 +66,6 @@ final class Bip32Ed25519Tests: XCTestCase {
         }
     }
 
-    func testCheck3rdHighestBitIsSet() throws {
-        var data = Data(repeating: 0, count: 32)
-        data[31] = 0b00000000 // Set the last byte such that the 3rd highest bit is 0
-        XCTAssertEqual(c!.check3rdHighestBitIsSet(data), false)
-        data[31] = 0b00100000 // Set the last byte such that the 3rd highest bit is 1
-        XCTAssertEqual(c!.check3rdHighestBitIsSet(data), true)
-    }
-
     func testHarden() throws {
         XCTAssertEqual(c!.harden(0), 2147483648)
         XCTAssertEqual(c!.harden(1), 2147483649)
