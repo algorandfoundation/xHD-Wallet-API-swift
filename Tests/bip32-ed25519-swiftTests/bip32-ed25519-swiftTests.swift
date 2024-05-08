@@ -65,6 +65,8 @@ final class Bip32Ed25519Tests: XCTestCase {
             let seed = try Mnemonic.deterministicSeedString(from: seed)
             XCTAssertNotNil(Bip32Ed25519(seed: seed))
         }
+
+        XCTAssertNil(Bip32Ed25519(seed: "invalid hex seed"))
     }
 
     func testHarden() throws {
