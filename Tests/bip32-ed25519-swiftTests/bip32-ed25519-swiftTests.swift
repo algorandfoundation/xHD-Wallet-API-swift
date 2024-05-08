@@ -36,22 +36,42 @@ final class Bip32Ed25519Tests: XCTestCase {
     }
 
     func testInitializationWithSeeds() throws {
+        // Warning: never use these phrases!
         let seeds = [
-            "buzz shine glance always item subject skill found season stamp fetch flash fold abstract must because parade region blast truck impulse prosper grain seek",
-            "bunker wrap bar poverty giant danger winner warm upset fringe cheese onion stable cricket stable gate blouse pizza win total habit worth project coconut",
-            "olive goddess walk pause useless casual trend smooth ecology trophy carpet ritual hair sister thrive copy life fury wear satoshi slice patrol sunset regret",
-            "agree august rabbit educate merry board wage despair prosper whip bomb rain swear edit junk shy tooth moral penalty stamp vague spare shoulder text",
-            "guard hold armed village legal net awesome donate abuse oyster okay feature leaf hope rich joy echo there bike spray recipe buzz describe drift",
-            "crowd dismiss rescue excess sun timber pipe vapor monkey soft abstract genre satisfy shed polar require cool simple neutral gossip salon mango guess relax",
-            "mother core spy soon solution gun claim wall youth senior inform steak symbol drive logic inject repair laptop north apple inmate giggle salute certain",
-            "cat what ranch curve corn exchange govern isolate slot spy coconut tonight body popular air leg water canal write brick inherit strategy champion rent",
-            "twenty flush lemon rough foot believe shadow good metal health plate bid squirrel egg rescue wedding evidence scissors foster jump risk invite goat episode",
-            "struggle second hungry grocery cost release ice apple scrap hammer endless since side kingdom ugly black increase crane aware zebra bottom gesture little cool",
-            "flock body brick throw tone add alcohol toe list blame cupboard belt garden opinion knife door peace vote toss cake wreck carpet cabbage panther",
-        ]
+            "bullet safe club entry raise radio boil tool among column boring giant rack panel minor gown pair hard pulse nice shy attract torch fun",
+            "rapid guide picture cereal satoshi napkin affair task search enjoy kangaroo tube bridge learn churn tongue misery hotel race mandate verify multiply tower other",
+            "thing brand only clap title duty vacuum picnic first basket brand tail tape give alarm brick inhale beauty banner text wasp judge wait borrow",
+            "suffer rhythm sure sugar slice dynamic service trim bulb fence tube make smile table rally noodle crop subway industry club rely section idle frame",
+            "valley fee chase mirror celery mom carpet fuel clown crisp interest town mosquito lamp please black giggle beach always fruit win tribe often bright",
+            "fish increase monitor cruise deer start angle custom hand dwarf erode expose ancient fix surprise garment ecology bone soccer meadow build eye jelly legend",
+            "ill catch planet summer blue clump stem rail express giraffe focus squirrel season behind field gentle online daughter select man parent castle awesome orchard",
+            "gorilla piano secret fashion birth despair dumb gloom paddle tissue start demand primary robust enemy upset give neutral snap extend stereo task shoot load",
+            "there reflect turkey language tragic hint destroy salt stamp party weasel pudding tent couch purse grace modify mansion among spell lamp beef trip uncover",
+            "truth stand beyond payment october fury frame common advice bamboo casino panda nation valve siren kind inherit patch pair measure wage beauty forward rare",
+            "suffer office prosper base subway arena avoid hamster betray animal angry method scare polar hunt lumber economy barely ticket coast ladder wheel acid trouble",
+            "allow coast mandate galaxy setup fire beach pulse learn garbage good intact citizen mixture whip shrug shy rescue gown few hold today system galaxy",
+            "law favorite talent thunder enroll muffin access else chef wedding wait rice squirrel logic surge rice social dove syrup jacket fitness embark able believe",
+            "label enough energy reject weather post supply frown pattern super wrist sentence simple fetch capable burger lift pumpkin zone quit design anger supreme unveil",
+            "offer program own fog cream echo scene marine enforce jacket supreme digital bread crowd captain poverty clerk because piano fortune shaft way library spawn",
+            "crash subway naive party tower worth unique about soap conduct zone soon absurd notice air ride sail hurt regret embark father lock license gym",
+            "brand mechanic access negative recall keen pepper popular century ten vessel tide napkin anchor option unit culture poet force theory tunnel boil foster solve",
+            "hotel park shrug economy group holiday merit thank plunge protect lemon test kit report pig roof gasp weekend parade labor candy praise lawsuit human",
+            "embrace acoustic define work teach bitter kiss mouse lamp melody mobile gasp sleep jazz kite next parrot trigger limb eye push oppose shiver certain",
+            "duty rice trust section few more seven course sister curve destroy common list dad whip enhance empty asthma icon grace logic remove cherry black",
+            "deny aunt maple dream humor lucky cluster beauty world fat age shock note list because decorate frown saddle buddy village heavy air win liquid",
+            ]
         for seed in seeds {
-            XCTAssertNotNil(Bip32Ed25519(seed: try Mnemonic.deterministicSeedString(from: seed)))
+            let seed = try Mnemonic.deterministicSeedString(from: seed)
+            XCTAssertNotNil(Bip32Ed25519(seed: seed))
         }
+    }
+
+    func testCheck3rdHighestBitIsSet() throws {
+        var data = Data(repeating: 0, count: 32)
+        data[31] = 0b00000000 // Set the last byte such that the 3rd highest bit is 0
+        XCTAssertEqual(c!.check3rdHighestBitIsSet(data), false)
+        data[31] = 0b00100000 // Set the last byte such that the 3rd highest bit is 1
+        XCTAssertEqual(c!.check3rdHighestBitIsSet(data), true)
     }
 
     func testHarden() throws {

@@ -84,7 +84,7 @@ public class Bip32Ed25519 {
     private var seed: Data
 
     // Overloaded initializer that accepts a seed
-    public init?(seed: Data) {
+    public init?(seed: Data) throws {
         self.seed = seed
     }
 
@@ -116,7 +116,7 @@ public class Bip32Ed25519 {
         var kR = k.subdata(in: ED25519_SCALAR_SIZE..<2*ED25519_SCALAR_SIZE)
 
         // While the third highest bit of the last byte of kL is not zero
-        while kL[31] & 0b00100000 != 0 {
+        while check3rdHighestBitIsSet(kL) {
             k = CryptoUtils.hmacSha512(key: kL, data: kR)
             kL = k.subdata(in: 0..<ED25519_SCALAR_SIZE)
             kR = k.subdata(in: ED25519_SCALAR_SIZE..<2*ED25519_SCALAR_SIZE)
@@ -133,6 +133,11 @@ public class Bip32Ed25519 {
         // SHA256(0x01||k)
         let c = CryptoUtils.sha256(data: Data([0x01]) + seed)
         return kL + kR + c
+    }
+
+    // Check if the 3rd highest bit of the last byte is set
+    public func check3rdHighestBitIsSet(_ data: Data) -> Bool {
+        return data[31] & 0b00100000 != 0
     }
 
     func deriveNonHardened(kl: Data, cc: Data, index: UInt32) -> (z: Data, childChainCode: Data) {
