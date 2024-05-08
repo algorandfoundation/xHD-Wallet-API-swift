@@ -35,8 +35,23 @@ final class Bip32Ed25519Tests: XCTestCase {
         }
     }
 
-    func testInitializationWithSeed() throws {
-        XCTAssertNotNil(c)
+    func testInitializationWithSeeds() throws {
+        let seeds = [
+            "buzz shine glance always item subject skill found season stamp fetch flash fold abstract must because parade region blast truck impulse prosper grain seek",
+            "bunker wrap bar poverty giant danger winner warm upset fringe cheese onion stable cricket stable gate blouse pizza win total habit worth project coconut",
+            "olive goddess walk pause useless casual trend smooth ecology trophy carpet ritual hair sister thrive copy life fury wear satoshi slice patrol sunset regret",
+            "agree august rabbit educate merry board wage despair prosper whip bomb rain swear edit junk shy tooth moral penalty stamp vague spare shoulder text",
+            "guard hold armed village legal net awesome donate abuse oyster okay feature leaf hope rich joy echo there bike spray recipe buzz describe drift",
+            "crowd dismiss rescue excess sun timber pipe vapor monkey soft abstract genre satisfy shed polar require cool simple neutral gossip salon mango guess relax",
+            "mother core spy soon solution gun claim wall youth senior inform steak symbol drive logic inject repair laptop north apple inmate giggle salute certain",
+            "cat what ranch curve corn exchange govern isolate slot spy coconut tonight body popular air leg water canal write brick inherit strategy champion rent",
+            "twenty flush lemon rough foot believe shadow good metal health plate bid squirrel egg rescue wedding evidence scissors foster jump risk invite goat episode",
+            "struggle second hungry grocery cost release ice apple scrap hammer endless since side kingdom ugly black increase crane aware zebra bottom gesture little cool",
+            "flock body brick throw tone add alcohol toe list blame cupboard belt garden opinion knife door peace vote toss cake wreck carpet cabbage panther",
+        ]
+        for seed in seeds {
+            XCTAssertNotNil(Bip32Ed25519(seed: try Mnemonic.deterministicSeedString(from: seed)))
+        }
     }
 
     func testHarden() throws {
