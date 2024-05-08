@@ -323,6 +323,44 @@ final class Bip32Ed25519Tests: XCTestCase {
     
     }
 
+    func testMsgPackToSwift() throws {
+        let nilValue: MessagePackValue = .nil
+        XCTAssertTrue(c?.messagePackValueToSwift(nilValue) is NSNull)
+
+        let boolValue: MessagePackValue = .bool(true)
+        XCTAssertEqual(c?.messagePackValueToSwift(boolValue) as? Bool, true)
+
+        let intValue: MessagePackValue = .int(-42)
+        XCTAssertEqual(c?.messagePackValueToSwift(intValue) as? Int64, -42)
+
+        let uintValue: MessagePackValue = .uint(42)
+        XCTAssertEqual(c?.messagePackValueToSwift(uintValue) as? UInt64, 42)
+
+        let floatValue: MessagePackValue = .float(42.0)
+        XCTAssertEqual(c?.messagePackValueToSwift(floatValue) as? Float, 42.0)
+
+        let doubleValue: MessagePackValue = .double(42.0)
+        XCTAssertEqual(c?.messagePackValueToSwift(doubleValue) as? Double, 42.0)
+
+        let strValue: MessagePackValue = .string("Hello")
+        XCTAssertEqual(c?.messagePackValueToSwift(strValue) as? String, "Hello")
+
+        let binaryValue: MessagePackValue = .binary(Data([1, 2, 3]))
+        XCTAssertEqual(c?.messagePackValueToSwift(binaryValue) as? Data, Data([1, 2, 3]))
+
+        let arrayValue: MessagePackValue = .array([.int(1), .int(2), .int(3)])
+        XCTAssertEqual(c?.messagePackValueToSwift(arrayValue) as? [Int64], [1, 2, 3])
+
+        let mapValue: MessagePackValue = .map(["key": .string("value")])
+        XCTAssertEqual(c?.messagePackValueToSwift(mapValue) as? [String: String], ["key": "value"])
+
+        let extendedValue: MessagePackValue = .extended(42, Data([1, 2, 3]))
+        let expected: [String: Any] = ["type": 42, "data": Data([1, 2, 3])]
+        let produced = c?.messagePackValueToSwift(extendedValue) as? [String: Any]
+        XCTAssertEqual(produced?["type"] as? Int64, expected["type"] as? Int64)
+        XCTAssertEqual(produced?["data"] as? Data, expected["data"] as? Data)
+    }
+
     func testPrefixError() throws {
         // Algorand transaction bytes
         let txBytes = Data([84, 88, 138, 163, 97, 109, 116, 206, 0, 152, 150, 128, 163, 102, 101, 101, 205, 3, 232, 162, 102, 118, 1, 163, 103, 101, 110, 172, 100, 111, 99, 107, 101, 114, 110, 101, 116, 45, 118, 49, 162, 103, 104, 196, 32, 241, 58, 20, 104, 56, 57, 150, 147, 27, 180, 33, 136, 150, 19, 75, 8, 122, 48, 230, 57, 166, 3, 22, 66, 230, 213, 105, 153, 155, 59, 116, 186, 162, 108, 118, 205, 3, 233, 164, 110, 111, 116, 101, 196, 17, 116, 101, 115, 116, 32, 116, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 33, 163, 114, 99, 118, 196, 32, 5, 203, 108, 214, 116, 145, 109, 203, 70, 233, 152, 142, 138, 129, 38, 88, 243, 206, 29, 133, 166, 17, 142, 91, 181, 120, 56, 133, 132, 103, 116, 129, 163, 115, 110, 100, 196, 32, 71, 235, 237, 176, 141, 136, 126, 190, 43, 187, 124, 13, 136, 150, 5, 71, 243, 107, 143, 109, 238, 238, 131, 63, 179, 59, 91, 63, 6, 64, 197, 130, 164, 116, 121, 112, 101, 163, 112, 97, 121])
