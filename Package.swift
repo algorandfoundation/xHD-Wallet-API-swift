@@ -13,11 +13,12 @@ let package = Package(
     products: [
         .library(
             name: "bip32-ed25519-swift",
-            targets: ["bip32-ed25519-swift"]),
+            targets: ["bip32-ed25519-swift"]
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/a2/MessagePack.swift.git", from: "4.0.0"),
-        .package(url: "https://github.com/algorandfoundation/swift-sodium-full.git", branch:("master")),
+        .package(url: "https://github.com/algorandfoundation/swift-sodium-full.git", branch: "master"),
         .package(url: "https://github.com/attaswift/BigInt.git", from: "5.2.1"),
         .package(url: "https://github.com/Electric-Coin-Company/MnemonicSwift.git", from: "2.2.4"),
         .package(url: "https://github.com/kylef/JSONSchema.swift.git", revision: "8c7ec156dde09715d8d2ed83cc8fe6b1ba90648c"),
@@ -32,20 +33,21 @@ let package = Package(
                 .product(name: "Sodium", package: "swift-sodium-full"),
                 .product(name: "BigInt", package: "BigInt"),
                 .product(name: "JSONSchema", package: "JSONSchema.swift"),
-                .product(name: "MessagePack", package: "MessagePack.swift")
-                ],
+                .product(name: "MessagePack", package: "MessagePack.swift"),
+            ],
             plugins: [
-                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLint")]),
+                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLint"),
+            ]
+        ),
         .testTarget(
             name: "bip32-ed25519-swiftTests",
             dependencies: ["bip32-ed25519-swift",
-                .product(name: "MnemonicSwift", package: "MnemonicSwift"),
-                .product(name: "Base32", package: "Base32"),
-            ],
+                           .product(name: "MnemonicSwift", package: "MnemonicSwift"),
+                           .product(name: "Base32", package: "Base32")],
             resources: [
                 .process("schemas/auth.request.json"),
                 .process("schemas/msg.schema.json"),
-                .process("schemas/malformed.json")
+                .process("schemas/malformed.json"),
             ]
         ),
     ]
