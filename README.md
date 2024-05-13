@@ -86,7 +86,7 @@ This repo comes with both [Swiftformat](https://github.com/nicklockwood/SwiftFor
 
 SwiftLint comes with its own `SwiftLintBuildToolPlugin` and is such run as part of any normal `swift build` call.
 
-SwiftFormat is run as part of the pre-commit hook, and can otherwise be called from the command line with `swift package plugin --allow-writing-to-package-directory swiftformat .` to fix what it can fix by itself to get it to do linting. As this also triggers a `swift build`, SwiftLint gets run as well.
+SwiftFormat is run as part of the pre-commit hook, and can otherwise be called from the command line with `swift package plugin --allow-writing-to-package-directory swiftformat .`. As this also triggers a `swift build`, SwiftLint gets run as well.
 
 The two do overlap but, generally speaking, SwiftFormat formats the code while SwiftLint warns or errors out on code-smells.
 
