@@ -11,23 +11,21 @@ let package = Package(
         .macOS(.v12),
     ],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "bip32-ed25519-swift",
             targets: ["bip32-ed25519-swift"]),
     ],
     dependencies: [
-        // Dependencies declare other packages that this package depends on.
+        .package(url: "https://github.com/a2/MessagePack.swift.git", from: "4.0.0"),
         .package(url: "https://github.com/algorandfoundation/swift-sodium-full.git", branch:("master")),
         .package(url: "https://github.com/attaswift/BigInt.git", from: "5.2.1"),
         .package(url: "https://github.com/Electric-Coin-Company/MnemonicSwift.git", from: "2.2.4"),
-        .package(url: "https://github.com/norio-nomura/Base32.git", from: "0.9.0"),
         .package(url: "https://github.com/kylef/JSONSchema.swift.git", revision: "8c7ec156dde09715d8d2ed83cc8fe6b1ba90648c"),
-        .package(url: "https://github.com/a2/MessagePack.swift.git", from: "4.0.0")
+        .package(url: "https://github.com/realm/SwiftLint", from: "0.55.0"),
+        .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.53.9"),
+        .package(url: "https://github.com/norio-nomura/Base32.git", from: "0.9.0"),
     ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "bip32-ed25519-swift",
             dependencies: [
@@ -35,7 +33,9 @@ let package = Package(
                 .product(name: "BigInt", package: "BigInt"),
                 .product(name: "JSONSchema", package: "JSONSchema.swift"),
                 .product(name: "MessagePack", package: "MessagePack.swift")
-                ]),
+                ],
+            plugins: [
+                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLint")]),
         .testTarget(
             name: "bip32-ed25519-swiftTests",
             dependencies: ["bip32-ed25519-swift",

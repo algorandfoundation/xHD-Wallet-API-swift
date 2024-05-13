@@ -1,0 +1,7 @@
+disabled_rules:
+  - identifier_name
+force_cast:
+  severity: warning
+force_try:
+  severity: warning
+reporter: "github-actions-logging"

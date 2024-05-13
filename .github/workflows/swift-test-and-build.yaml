@@ -16,6 +16,9 @@ jobs:
         with:
           swift-version: "5.9"
 
+      - name: SwiftFormat
+        run: swiftformat --lint . --reporter github-actions-log
+
       - name: Build
         run: swift build
 

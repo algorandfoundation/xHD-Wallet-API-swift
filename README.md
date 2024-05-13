@@ -4,6 +4,16 @@ A Swift implementation of ARC-0052 Algorand, in accordance with the paper BIP32-
 
 Note that this library has NOT undergone audit and is NOT recommended for production use.
 
+## Git Hooks
+
+This repo comes with git hooks.
+
+Copy the hooks under git-hooks into the .git/hooks/ directory:
+
+```
+cp git-hooks/* .git/hooks/
+```
+
 ## How to Use
 
 To initialize a wallet (using MnemmonicSwift for BIP-39 support) from a seed phrase:

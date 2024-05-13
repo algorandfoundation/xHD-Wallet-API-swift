@@ -15,15 +15,13 @@
  * limitations under the License.
  */
 
-import Sodium
 import Clibsodium
 import Foundation
+import Sodium
 
-public struct SodiumHelper {
-
+public enum SodiumHelper {
     public static let ED25519_SCALAR_SIZE = 32
     public static let ED25519_POINT_SIZE = 32
-
 
     public static func scalarMultEd25519BaseNoClamp(_ scalar: Data) -> Data {
         var q = [UInt8](repeating: 0, count: ED25519_POINT_SIZE)
@@ -82,7 +80,7 @@ public struct SodiumHelper {
         return result == 0
     }
 
-    public static func convertPublicKeyEd25519ToCurve25519 (_ publicKey: Data) -> Data {
+    public static func convertPublicKeyEd25519ToCurve25519(_ publicKey: Data) -> Data {
         var curve25519_pk = [UInt8](repeating: 0, count: ED25519_POINT_SIZE)
         _ = publicKey.withUnsafeBytes { ed25519_pk in
             crypto_sign_ed25519_pk_to_curve25519(&curve25519_pk, ed25519_pk.baseAddress!)
@@ -103,7 +101,7 @@ public struct SodiumHelper {
     public static func cryptoGenericHash(input: Data, outputLength: Int) -> Data {
         var out = [UInt8](repeating: 0, count: outputLength)
         _ = input.withUnsafeBytes { inPtr in
-                crypto_generichash(&out, out.count, inPtr.baseAddress!, UInt64(input.count), nil, 0)
+            crypto_generichash(&out, out.count, inPtr.baseAddress!, UInt64(input.count), nil, 0)
         }
         return Data(out)
     }

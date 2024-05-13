@@ -1,0 +1,4 @@
+#!/bin/sh
+
+## Format the code
+swift package plugin --allow-writing-to-package-directory swiftformat

@@ -18,7 +18,7 @@
 import CryptoKit
 import Foundation
 
-public struct CryptoUtils {
+public enum CryptoUtils {
     public static func sha512(data: Data) -> Data {
         let hashed = SHA512.hash(data: data)
         return Data(hashed)
