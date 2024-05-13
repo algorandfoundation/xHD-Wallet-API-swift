@@ -80,6 +80,20 @@ let sharedSecret = c.ECDH(context: KeyContext.Identity, account: 0, change: 0, k
 
 Note that under the hood the sharedSecret is calculated using x25519 form.
 
+## Formatting and Linting
+
+This repo comes with both [Swiftformat](https://github.com/nicklockwood/SwiftFormat) and [Swiftlint](https://github.com/realm/SwiftLint).
+
+Swiftlint comes with its own `SwiftLintBuildToolPlugin` and is such run as part of any normal `swift build` call.
+
+Swiftformat is run as part of the pre-commit hook, and can otherwise be called from the command line with `swift package plugin --allow-writing-to-package-directory swiftformat`. As this also triggers a `swift build`, Swiftlint gets run as well.
+
+The two do overlap but, generally speaking, Swiftformat formats the code while Swiftlint warns or errors out on code-smells.
+
+## Requirements
+
+The Package.swift file specifies the minimum version of Swift required to build this library, as well as the minimum versions of the platforms. `.swift-version` also specifies the version for linting.
+
 ## License
 
 Copyright 2024 Algorand Foundation

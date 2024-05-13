@@ -16,7 +16,7 @@ import Foundation
 
 public struct SHA512_256 {
     public func hash(_ message: [UInt8]) -> [UInt8] {
-        return SHA2.hash64Bit(message: message)
+        SHA2.hash64Bit(message: message)
     }
 }
 
@@ -43,7 +43,7 @@ let k: [UInt64] = [0x428A_2F98_D728_AE22, 0x7137_4491_23EF_65CD, 0xB5C0_FBCF_EC4
                    0x431D_67C4_9C10_0D4C, 0x4CC5_D4BE_CB3E_42B6, 0x597F_299C_FC65_7E2A, 0x5FCB_6FAB_3AD6_FAEC, 0x6C44_198C_4A47_5817]
 
 func truncateResult<T>(h: [T]) -> ArraySlice<T> {
-    return h[0 ..< 4]
+    h[0 ..< 4]
 }
 
 // swiftlint:enable variable_name
@@ -170,7 +170,7 @@ enum SHA2 {
     // swiftlint:enable function_body_length
 
     static func hash64Bit(message: String) -> String {
-        return Representations.toHexadecimalString(
+        Representations.toHexadecimalString(
             bytes: hash64Bit(message: Array(message.utf8))
         )
     }
@@ -190,11 +190,11 @@ public extension Array {
 
 extension UInt64 {
     func rotateLeft(_ times: UInt64) -> UInt64 {
-        return (self << times) | (self >> (64 - times))
+        (self << times) | (self >> (64 - times))
     }
 
     func rotateRight(_ times: UInt64) -> UInt64 {
-        return (self >> times) | (self << (64 - times))
+        (self >> times) | (self << (64 - times))
     }
 
     func reverseBytes() -> UInt64 {

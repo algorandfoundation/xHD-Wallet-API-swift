@@ -47,7 +47,7 @@ public enum TestUtils {
     }
 
     public static func sha512_256(data: Data) -> Data {
-        return Data(SHA512_256().hash([UInt8](data)))
+        Data(SHA512_256().hash([UInt8](data)))
     }
 
     public static func encodeAddress(bytes: Data) throws -> String {

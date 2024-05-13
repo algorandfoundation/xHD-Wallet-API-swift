@@ -47,7 +47,12 @@ public struct Schema {
     init(filePath: String) throws {
         let url = URL(fileURLWithPath: filePath)
         let data = try Data(contentsOf: url)
-        let jsonSchema = try JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
+        let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
+
+        guard let jsonSchema = jsonObject as? [String: Any] else {
+            throw NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid JSON schema"])
+        }
+
         self.jsonSchema = jsonSchema
     }
 }
@@ -89,15 +94,15 @@ public class Bip32Ed25519 {
     }
 
     func harden(_ num: UInt32) -> UInt32 {
-        return 0x8000_0000 + num
+        0x8000_0000 + num
     }
 
     func getBIP44PathFromContext(context: KeyContext, account: UInt32, change: UInt32, keyIndex: UInt32) -> [UInt32] {
         switch context {
         case .Address:
-            return [harden(44), harden(283), harden(account), change, keyIndex]
+            [harden(44), harden(283), harden(account), change, keyIndex]
         case .Identity:
-            return [harden(44), harden(0), harden(account), change, keyIndex]
+            [harden(44), harden(0), harden(account), change, keyIndex]
         }
     }
 
@@ -259,7 +264,7 @@ public class Bip32Ed25519 {
     }
 
     public func verifyWithPublicKey(signature: Data, message: Data, publicKey: Data) -> Bool {
-        return SodiumHelper.cryptoSignVerifyDetached(signature, message, publicKey)
+        SodiumHelper.cryptoSignVerifyDetached(signature, message, publicKey)
     }
 
     func hasAlgorandTags(data: Data) -> Bool {
@@ -298,8 +303,12 @@ public class Bip32Ed25519 {
         }
 
         do {
-            let valid = try JSONSchema.validate(JSONSerialization.jsonObject(with: rawData, options: []) as! [String: Any], schema: metadata.schema.jsonSchema)
-            return valid.valid
+            if let jsonObject = try JSONSerialization.jsonObject(with: rawData, options: []) as? [String: Any] {
+                let valid = try JSONSchema.validate(jsonObject, schema: metadata.schema.jsonSchema)
+                return valid.valid
+            } else {
+                return false
+            }
         } catch {
             return false
         }
@@ -322,31 +331,31 @@ public class Bip32Ed25519 {
     public func messagePackValueToSwift(_ value: MessagePackValue) -> Any {
         switch value {
         case .nil:
-            return NSNull()
+            NSNull()
         case let .bool(bool):
-            return bool
+            bool
         case let .int(int):
-            return int
+            int
         case let .uint(uint):
-            return uint
+            uint
         case let .float(float):
-            return float
+            float
         case let .double(double):
-            return double
+            double
         case let .string(string):
-            return string
+            string
         case let .binary(data):
-            return data
+            data
         case let .array(array):
-            return array.compactMap { messagePackValueToSwift($0) }
+            array.compactMap { messagePackValueToSwift($0) }
         case let .map(dict):
-            return dict.reduce(into: [String: Any]()) { result, pair in
+            dict.reduce(into: [String: Any]()) { result, pair in
                 if let key = pair.key.stringValue {
                     result[key] = messagePackValueToSwift(pair.value)
                 }
             }
         case let .extended(type, data):
-            return ["type": type, "data": data]
+            ["type": type, "data": data]
         }
     }
 
