@@ -82,13 +82,13 @@ Note that under the hood the sharedSecret is calculated using x25519 form.
 
 ## Formatting and Linting
 
-This repo comes with both [Swiftformat](https://github.com/nicklockwood/SwiftFormat) and [Swiftlint](https://github.com/realm/SwiftLint).
+This repo comes with both [Swiftformat](https://github.com/nicklockwood/SwiftFormat) and [SwiftLint](https://github.com/realm/SwiftLint).
 
-Swiftlint comes with its own `SwiftLintBuildToolPlugin` and is such run as part of any normal `swift build` call.
+SwiftLint comes with its own `SwiftLintBuildToolPlugin` and is such run as part of any normal `swift build` call.
 
-Swiftformat is run as part of the pre-commit hook, and can otherwise be called from the command line with `swift package plugin --allow-writing-to-package-directory swiftformat`. As this also triggers a `swift build`, Swiftlint gets run as well.
+SwiftFormat is run as part of the pre-commit hook, and can otherwise be called from the command line with `swift package plugin --allow-writing-to-package-directory swiftformat`. As this also triggers a `swift build`, SwiftLint gets run as well.
 
-The two do overlap but, generally speaking, Swiftformat formats the code while Swiftlint warns or errors out on code-smells.
+The two do overlap but, generally speaking, SwiftFormat formats the code while SwiftLint warns or errors out on code-smells.
 
 ## Requirements
 
