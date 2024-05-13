@@ -1,7 +1,7 @@
 // Modified off of Matan Lachmish's Cryptography repo
 // https://github.com/mlachmish/Cryptography/ MIT License
 //
-// SHA512_256.swift
+// SHA2 [.] swift
 //  Cryptography
 //
 //  Created by Matan Lachmish on 25/07/2016.
