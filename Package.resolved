@@ -111,8 +111,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/algorandfoundation/swift-sodium-full.git",
       "state" : {
-        "branch" : "master",
-        "revision" : "81b8d80c36dea51b2ea028c693f852ee6dc5e8c7"
+        "revision" : "4859e76668cdf80e0b01d76eaf0c70d50e1f1bd9",
+        "version" : "1.0.0"
       }
     },
     {

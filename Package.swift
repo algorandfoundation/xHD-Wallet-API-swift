@@ -18,7 +18,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/a2/MessagePack.swift.git", from: "4.0.0"),
-        .package(url: "https://github.com/algorandfoundation/swift-sodium-full.git", branch: "master"),
+        .package(url: "https://github.com/algorandfoundation/swift-sodium-full.git", from: "1.0.0"),
         .package(url: "https://github.com/attaswift/BigInt.git", from: "5.2.1"),
         .package(url: "https://github.com/Electric-Coin-Company/MnemonicSwift.git", from: "2.2.4"),
         .package(url: "https://github.com/kylef/JSONSchema.swift.git", revision: "8c7ec156dde09715d8d2ed83cc8fe6b1ba90648c"),
