@@ -226,7 +226,7 @@ public class Bip32Ed25519 {
         return isPrivate ? derived : SodiumHelper.scalarMultEd25519BaseNoClamp(derived.subdata(in: 0 ..< ED25519_SCALAR_SIZE))
     }
 
-    func keyGen(context: KeyContext, account: UInt32, change: UInt32, keyIndex: UInt32) -> Data {
+    public func keyGen(context: KeyContext, account: UInt32, change: UInt32, keyIndex: UInt32) -> Data {
         let rootKey: Data = fromSeed(seed)
         let bip44Path: [UInt32] = getBIP44PathFromContext(context: context, account: account, change: change, keyIndex: keyIndex)
 
