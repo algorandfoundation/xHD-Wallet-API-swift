@@ -39,9 +39,10 @@
     {
       "identity" : "jsonschema.swift",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/kylef/JSONSchema.swift.git",
+      "location" : "https://github.com/algorandfoundation/JSONSchema.swift.git",
       "state" : {
-        "revision" : "8c7ec156dde09715d8d2ed83cc8fe6b1ba90648c"
+        "revision" : "92385c024dee684e0b6b9dee6ee067844bf61f38",
+        "version" : "0.7.0"
       }
     },
     {
@@ -85,7 +86,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/kylef/Spectre.git",
       "state" : {
-        "revision" : "d02129a9af77729de049d328dd61e530b6f2bb2b"
+        "revision" : "26cc5e9ae0947092c7139ef7ba612e34646086c7",
+        "version" : "0.10.1"
       }
     },
     {
