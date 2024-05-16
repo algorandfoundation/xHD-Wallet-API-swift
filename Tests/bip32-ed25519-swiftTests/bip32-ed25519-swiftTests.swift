@@ -131,7 +131,7 @@ final class Bip32Ed25519Tests: XCTestCase {
         }
     }
 
-    func testTrunc28() throws {
+    func testSliceAndMask() throws {
         let testCases: [(zl: Data, g: Int, expected: Data)] = [
             (
                 Data([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]),
@@ -141,7 +141,7 @@ final class Bip32Ed25519Tests: XCTestCase {
         ]
 
         for (zl, g, expected) in testCases {
-            let result = c!.trunc28(zl: zl, g: g)
+            let result = c!.sliceAndMask(zl: zl, g: g)
 
             // Print the result in binary
             print("Result for g=\(g):")

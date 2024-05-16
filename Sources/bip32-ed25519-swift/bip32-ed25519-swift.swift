@@ -193,7 +193,8 @@ public class Bip32Ed25519 {
 
         // left = kl + 8 * trunc28(zl)
         // right = zr + kr
-        let left = BigUInt(Data(kl.reversed())) + BigUInt(trunc28(zl: zl, g: 9)) * BigUInt(8)
+        let left = BigUInt(Data(kl.reversed())) + BigUInt(Data(zl.subdata(in: 0 ..< 28).reversed())) * BigUInt(8)
+        // let left = BigUInt(Data(kl.reversed())) + BigUInt(sliceAndMask(zl: zl, g: 9)) * BigUInt(8)
         let right = BigUInt(Data(kr.reversed())) + BigUInt(Data(zr.reversed()))
 
         // Reverse byte order back after calculations
@@ -216,7 +217,7 @@ public class Bip32Ed25519 {
         return result
     }
 
-    func trunc28(zl: Data, g: Int) -> Data {
+    func sliceAndMask(zl: Data, g: Int) -> Data {
         let sliceBits = 256 - g
         let sliceBytes = (sliceBits + 7) / 8
 
