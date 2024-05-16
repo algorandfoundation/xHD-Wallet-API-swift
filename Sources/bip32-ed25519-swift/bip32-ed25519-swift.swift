@@ -83,11 +83,11 @@ extension Data {
 extension String {
     /// Pads the string to the left to the specified length with the specified pad string.
     func leftPadding(toLength: Int, withPad character: String) -> String {
-        let newLength = self.count
+        let newLength = count
         if newLength < toLength {
             return String(repeating: character, count: toLength - newLength) + self
         } else {
-            return String(self.suffix(toLength))
+            return String(suffix(toLength))
         }
     }
 }
@@ -225,19 +225,18 @@ public class Bip32Ed25519 {
             fatalError("Not enough data in zl to slice")
         }
 
-        // Initialize the slice array with a capacity of 32 bytes
-        var slice = zl.subdata(in: 0..<sliceBytes)
+        var slice = zl.subdata(in: 0 ..< sliceBytes)
 
+        // add padding if needed
         if sliceBytes < 32 {
             slice += [UInt8](repeating: 0, count: 32 - slice.count)
         }
 
-        // Calculate how many bits and mask
+        // calc bits and mask
         let maskBits = sliceBytes * 8 - sliceBits
         if maskBits > 0 {
             let mask = UInt8((1 << (8 - maskBits)) - 1)
             slice[sliceBytes - 1] &= mask
-            // print("Masked slice: \(slice)")
         }
 
         return Data(slice)
