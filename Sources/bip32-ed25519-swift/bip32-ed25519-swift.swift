@@ -80,6 +80,18 @@ extension Data {
     }
 }
 
+extension String {
+    /// Pads the string to the left to the specified length with the specified pad string.
+    func leftPadding(toLength: Int, withPad character: String) -> String {
+        let newLength = self.count
+        if newLength < toLength {
+            return String(repeating: character, count: toLength - newLength) + self
+        } else {
+            return String(self.suffix(toLength))
+        }
+    }
+}
+
 let sharedSecretHashBufferSize = 32
 let ED25519_SCALAR_SIZE = 32
 
@@ -181,7 +193,7 @@ public class Bip32Ed25519 {
 
         // left = kl + 8 * trunc28(zl)
         // right = zr + kr
-        let left = BigUInt(Data(kl.reversed())) + BigUInt(Data(zl.subdata(in: 0 ..< 28).reversed())) * BigUInt(8)
+        let left = BigUInt(Data(kl.reversed())) + BigUInt(trunc28(zl: zl, g: 9)) * BigUInt(8)
         let right = BigUInt(Data(kr.reversed())) + BigUInt(Data(zr.reversed()))
 
         // Reverse byte order back after calculations
@@ -202,6 +214,33 @@ public class Bip32Ed25519 {
         result.append(rightData)
         result.append(chainCode)
         return result
+    }
+
+    func trunc28(zl: Data, g: Int) -> Data {
+        let sliceBits = 256 - g
+        let sliceBytes = (sliceBits + 7) / 8
+
+        // error out if we use this without the minimum bytes necessary
+        guard zl.count >= sliceBytes else {
+            fatalError("Not enough data in zl to slice")
+        }
+
+        // Initialize the slice array with a capacity of 32 bytes
+        var slice = zl.subdata(in: 0..<sliceBytes)
+
+        if sliceBytes < 32 {
+            slice += [UInt8](repeating: 0, count: 32 - slice.count)
+        }
+
+        // Calculate how many bits and mask
+        let maskBits = sliceBytes * 8 - sliceBits
+        if maskBits > 0 {
+            let mask = UInt8((1 << (8 - maskBits)) - 1)
+            slice[sliceBytes - 1] &= mask
+            // print("Masked slice: \(slice)")
+        }
+
+        return Data(slice)
     }
 
     func deriveKey(rootKey: Data, bip44Path: [UInt32], isPrivate: Bool = true) -> Data {

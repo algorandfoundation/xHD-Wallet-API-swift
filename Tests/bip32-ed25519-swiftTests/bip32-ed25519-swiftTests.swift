@@ -131,6 +131,31 @@ final class Bip32Ed25519Tests: XCTestCase {
         }
     }
 
+    func testTrunc28() throws {
+
+        let testCases: [(zl: Data, g: Int, expected: Data)] = [
+            (
+                Data([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]),
+                9,
+                Data([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0x00])
+            ),
+        ]
+        
+        for (zl, g, expected) in testCases {
+            let result = c!.trunc28(zl: zl, g: g)
+            
+            // Print the result in binary
+            print("Result for g=\(g):")
+            
+            for byte in result {
+                print(String(byte, radix: 2).leftPadding(toLength: 8, withPad: "0"), terminator: " ")
+            }
+            print("\n")
+            
+            XCTAssertEqual(result, expected, "Failed for g=\(g)")
+        }
+    }
+
     func testDeriveKey() throws {
         let rootkey = Data([168, 186, 128, 2, 137, 34, 217, 252, 250, 5, 92, 120, 174, 222, 85, 181, 197, 117, 188, 216, 213, 165, 49, 104, 237, 244, 95, 54, 217, 236, 143, 70, 148, 89, 43, 75, 200, 146, 144, 117, 131, 226, 38, 105, 236, 223, 27, 4, 9, 169, 243, 189, 85, 73, 242, 221, 117, 27, 81, 54, 9, 9, 205, 5, 121, 107, 146, 6, 236, 48, 225, 66, 233, 75, 121, 10, 152, 128, 91, 249, 153, 4, 43, 85, 4, 105, 99, 23, 78, 230, 206, 226, 208, 55, 89, 70])
         let bip44Path = [UInt32]([2_147_483_692, 2_147_483_931, 2_147_483_648, 0, 0])
