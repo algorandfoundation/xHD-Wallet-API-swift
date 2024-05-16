@@ -193,8 +193,7 @@ public class Bip32Ed25519 {
 
         // left = kl + 8 * trunc28(zl)
         // right = zr + kr
-        let left = BigUInt(Data(kl.reversed())) + BigUInt(Data(zl.subdata(in: 0 ..< 28).reversed())) * BigUInt(8)
-        // let left = BigUInt(Data(kl.reversed())) + BigUInt(sliceAndMask(zl: zl, g: 9)) * BigUInt(8)
+        let left = BigUInt(Data(kl.reversed())) + BigUInt(sliceAndMask(zl: zl, g: 32)) * BigUInt(8)
         let right = BigUInt(Data(kr.reversed())) + BigUInt(Data(zr.reversed()))
 
         // Reverse byte order back after calculations
@@ -240,7 +239,7 @@ public class Bip32Ed25519 {
             slice[sliceBytes - 1] &= mask
         }
 
-        return Data(slice)
+        return Data(slice.reversed())
     }
 
     func deriveKey(rootKey: Data, bip44Path: [UInt32], isPrivate: Bool = true) -> Data {
