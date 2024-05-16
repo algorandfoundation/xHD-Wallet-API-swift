@@ -80,18 +80,6 @@ extension Data {
     }
 }
 
-extension String {
-    /// Pads the string to the left to the specified length with the specified pad string.
-    func leftPadding(toLength: Int, withPad character: String) -> String {
-        let newLength = count
-        if newLength < toLength {
-            return String(repeating: character, count: toLength - newLength) + self
-        } else {
-            return String(suffix(toLength))
-        }
-    }
-}
-
 let sharedSecretHashBufferSize = 32
 let ED25519_SCALAR_SIZE = 32
 

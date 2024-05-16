@@ -147,15 +147,6 @@ final class Bip32Ed25519Tests: XCTestCase {
 
         for (zl, g, expected) in testCases {
             let result = c!.sliceAndMask(zl: zl, g: g)
-
-            // Print the result in binary
-            print("Result for g=\(g):")
-
-            for byte in result {
-                print(String(byte, radix: 2).leftPadding(toLength: 8, withPad: "0"), terminator: " ")
-            }
-            print("\n")
-
             XCTAssertEqual(result, expected, "Failed for g=\(g)")
         }
     }
