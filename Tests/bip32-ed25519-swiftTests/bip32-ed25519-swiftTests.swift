@@ -125,13 +125,13 @@ final class Bip32Ed25519Tests: XCTestCase {
         let expectedOutputs = [Data([152, 225, 53, 235, 111, 189, 16, 80, 5, 187, 222, 103, 51, 25, 9, 175, 172, 210, 205, 151, 195, 80, 249, 179, 162, 157, 197, 181, 222, 236, 143, 70, 235, 179, 35, 29, 125, 172, 171, 5, 131, 195, 126, 183, 57, 159, 45, 69, 232, 136, 154, 57, 174, 63, 130, 164, 117, 24, 105, 139, 121, 92, 17, 211, 107, 102, 4, 2, 204, 196, 48, 71, 244, 82, 253, 123, 214, 63, 171, 147, 161, 188, 133, 206, 203, 205, 213, 26, 83, 29, 133, 228, 82, 216, 30, 127]), Data([248, 91, 210, 62, 156, 144, 108, 177, 63, 167, 126, 1, 132, 58, 45, 178, 246, 252, 188, 221, 105, 104, 97, 54, 232, 92, 190, 228, 226, 236, 143, 70, 187, 122, 35, 69, 101, 182, 49, 122, 216, 252, 71, 107, 197, 176, 56, 18, 136, 95, 146, 175, 1, 151, 252, 83, 155, 22, 27, 106, 47, 67, 37, 75, 213, 25, 13, 246, 205, 204, 73, 226, 124, 111, 209, 124, 76, 32, 166, 121, 128, 234, 224, 65, 27, 230, 42, 228, 35, 106, 79, 138, 154, 149, 109, 227])]
 
         for i in 0 ..< indices.count {
-            let output = c!.deriveChildNodePrivate(extendedKey: extendedKeys[i], index: indices[i])
+            let output = c!.deriveChildNodePrivate(extendedKey: extendedKeys[i], index: indices[i], g: BIP32DerivationType.Khovratovich.rawValue)
             XCTAssertEqual(output, expectedOutputs[i])
             XCTAssertEqual(output.count, 96)
         }
     }
 
-    func testSliceAndMask() throws {
+    func testTrunc256MinusGBits() throws {
         let testCases: [(zl: Data, g: Int, expected: Data)] = [
             (
                 Data([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]),
@@ -146,7 +146,7 @@ final class Bip32Ed25519Tests: XCTestCase {
         ]
 
         for (zl, g, expected) in testCases {
-            let result = c!.sliceAndMask(zl: zl, g: g)
+            let result = c!.trunc256MinusGBits(zl: zl, g: UInt32(g))
             XCTAssertEqual(result, expected, "Failed for g=\(g)")
         }
     }
@@ -156,11 +156,11 @@ final class Bip32Ed25519Tests: XCTestCase {
         let bip44Path = [UInt32]([2_147_483_692, 2_147_483_931, 2_147_483_648, 0, 0])
         let expectedResultPublic = Data([98, 254, 131, 43, 122, 209, 5, 68, 190, 131, 55, 166, 112, 67, 94, 80, 100, 174, 74, 102, 231, 123, 215, 137, 9, 118, 91, 70, 181, 118, 166, 243])
 
-        let outputPublic = c!.deriveKey(rootKey: rootkey, bip44Path: bip44Path, isPrivate: false)
+        let outputPublic = c!.deriveKey(rootKey: rootkey, bip44Path: bip44Path, isPrivate: false, derivationType: BIP32DerivationType.Khovratovich)
         XCTAssertEqual(outputPublic, expectedResultPublic)
 
         let expectedResultPrivate = Data([128, 16, 43, 185, 143, 170, 195, 253, 23, 137, 194, 198, 197, 89, 211, 113, 92, 217, 202, 194, 40, 214, 212, 176, 247, 106, 35, 70, 234, 236, 143, 70, 1, 174, 20, 40, 64, 137, 36, 62, 147, 107, 233, 27, 40, 35, 204, 20, 47, 117, 49, 53, 234, 255, 27, 174, 32, 211, 238, 199, 120, 112, 197, 68, 159, 146, 199, 144, 215, 171, 174, 224, 224, 10, 78, 193, 251, 120, 161, 212, 56, 232, 204, 247, 194, 186, 217, 160, 24, 165, 191, 154, 93, 81, 0, 117])
-        let outputPrivate = c!.deriveKey(rootKey: rootkey, bip44Path: bip44Path, isPrivate: true)
+        let outputPrivate = c!.deriveKey(rootKey: rootkey, bip44Path: bip44Path, isPrivate: true, derivationType: BIP32DerivationType.Khovratovich)
         XCTAssertEqual(outputPrivate, expectedResultPrivate)
     }
 
@@ -195,7 +195,7 @@ final class Bip32Ed25519Tests: XCTestCase {
         ]
 
         for (input, expected) in testVectors {
-            let pk = (c?.keyGen(context: input.0, account: input.1, change: input.2, keyIndex: input.3))!
+            let pk = (c?.keyGen(context: input.0, account: input.1, change: input.2, keyIndex: input.3, derivationType: BIP32DerivationType.Khovratovich))!
             XCTAssertEqual(pk, expected)
         }
     }
@@ -206,8 +206,8 @@ final class Bip32Ed25519Tests: XCTestCase {
         let prefixEncodedTx = Data(base64Encoded: "VFiJo2FtdM0D6KNmZWXNA+iiZnbOAkeSd6NnZW6sdGVzdG5ldC12MS4womdoxCBIY7UYpLPITsgQ8i1PEIHLD3HwWaesIN7GL39w5Qk6IqJsds4CR5Zfo3JjdsQgYv6DK3rRBUS+gzemcENeUGSuSmbne9eJCXZbRrV2pvOjc25kxCBi/oMretEFRL6DN6ZwQ15QZK5KZud714kJdltGtXam86R0eXBlo3BheQ==")
 
         let bip44Path = (KeyContext.Address, UInt32(0), UInt32(0), UInt32(0))
-        guard let pk = c?.keyGen(context: bip44Path.0, account: bip44Path.1, change: bip44Path.2, keyIndex: bip44Path.3) else { return }
-        guard let sig = c?.signAlgoTransaction(context: bip44Path.0, account: bip44Path.1, change: bip44Path.2, keyIndex: bip44Path.3, prefixEncodedTx: prefixEncodedTx!) else { return }
+        guard let pk = c?.keyGen(context: bip44Path.0, account: bip44Path.1, change: bip44Path.2, keyIndex: bip44Path.3, derivationType: BIP32DerivationType.Khovratovich) else { return }
+        guard let sig = c?.signAlgoTransaction(context: bip44Path.0, account: bip44Path.1, change: bip44Path.2, keyIndex: bip44Path.3, prefixEncodedTx: prefixEncodedTx!, derivationType: BIP32DerivationType.Khovratovich) else { return }
 
         XCTAssertEqual(c?.verifyWithPublicKey(signature: sig, message: prefixEncodedTx!, publicKey: pk), true)
         XCTAssertEqual(try TestUtils.encodeAddress(bytes: pk), "ML7IGK322ECUJPUDG6THAQ26KBSK4STG4555PCIJOZNUNNLWU3Z3ZFXITA")
@@ -464,17 +464,17 @@ final class Bip32Ed25519Tests: XCTestCase {
         "eyIwIjogMjgsICIxIjogMTAzLCAiMiI6IDI2LCAiMyI6IDIyMiwgIjQiOiA3LCAiNSI6IDg2LCAiNiI6IDU1LCAiNyI6IDk1LCAiOCI6IDE5NywgIjkiOiAxNzksICIxMCI6IDI0OSwgIjExIjogMjUyLCAiMTIiOiAyMzIsICIxMyI6IDI1MiwgIjE0IjogMTc2LCAiMTUiOiAzOSwgIjE2IjogMTEyLCAiMTciOiAxMzEsICIxOCI6IDUyLCAiMTkiOiA2MywgIjIwIjogMjEyLCAiMjEiOiA1OCwiMjIiOiAyMjYsICIyMyI6IDg5LCAiMjQiOiA2NCwgIjI1IjogOTQsICIyNiI6IDIzLCAiMjciOiA5MSwgIjI4IjogMTI4LCAiMjkiOiAxNDMsICIzMCI6IDEyMywgIjMxIjogMjd9",
         "de0020a1301ca13167a1321aa133ccdea13407a13556a13637a1375fa138ccc5a139ccb3a23130ccf9a23131ccfca23132cce8a23133ccfca23134ccb0a2313527a2313670a23137cc83a2313834a231393fa23230ccd4a232313aa23232cce2a2323359a2323440a232355ea2323617a232375ba23238cc80a23239cc8fa233307ba233311b"]
 
-        let pubkey = c?.keyGen(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0)
+        let pubkey = c?.keyGen(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0, derivationType: BIP32DerivationType.Khovratovich)
 
-        let sig = try c?.signData(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0, data: Data(challengeJSON[0].utf8), metadata: SignMetadata(encoding: Encoding.none, schema: schema))
+        let sig = try c?.signData(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0, data: Data(challengeJSON[0].utf8), metadata: SignMetadata(encoding: Encoding.none, schema: schema), derivationType: BIP32DerivationType.Khovratovich)
         let result = c?.verifyWithPublicKey(signature: sig!, message: Data(challengeJSON[0].utf8), publicKey: pubkey!)
         XCTAssert(result!)
 
-        let sigB64 = try c?.signData(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0, data: Data(challengeJSON[1].utf8), metadata: SignMetadata(encoding: Encoding.base64, schema: schema))
+        let sigB64 = try c?.signData(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0, data: Data(challengeJSON[1].utf8), metadata: SignMetadata(encoding: Encoding.base64, schema: schema), derivationType: BIP32DerivationType.Khovratovich)
         let resultB64 = c?.verifyWithPublicKey(signature: sigB64!, message: Data(challengeJSON[1].utf8), publicKey: pubkey!)
         XCTAssert(resultB64!)
 
-        let sigMsgP = try c?.signData(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0, data: Data(hexString: String(challengeJSON[2].utf8))!, metadata: SignMetadata(encoding: Encoding.msgpack, schema: schema))
+        let sigMsgP = try c?.signData(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0, data: Data(hexString: String(challengeJSON[2].utf8))!, metadata: SignMetadata(encoding: Encoding.msgpack, schema: schema), derivationType: BIP32DerivationType.Khovratovich)
         let resultMsgP = c?.verifyWithPublicKey(signature: sigMsgP!, message: Data(hexString: String(challengeJSON[2].utf8))!, publicKey: pubkey!)
         XCTAssert(resultMsgP!)
 
@@ -485,7 +485,7 @@ final class Bip32Ed25519Tests: XCTestCase {
 
         // Incorrect data and encoding
         do {
-            let _ = try c?.signData(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0, data: Data(challengeJSON[0].utf8), metadata: SignMetadata(encoding: Encoding.base64, schema: schema))
+            let _ = try c?.signData(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0, data: Data(challengeJSON[0].utf8), metadata: SignMetadata(encoding: Encoding.base64, schema: schema), derivationType: BIP32DerivationType.Khovratovich)
             throw MyError.expectedError
         } catch {
             XCTAssert(true)
@@ -514,11 +514,11 @@ final class Bip32Ed25519Tests: XCTestCase {
             throw NSError(domain: "Bip32Ed25519ECDHTests", code: 1, userInfo: [NSLocalizedDescriptionKey: "Bip32Ed25519 not initialized"])
         }
 
-        let aliceKey = alice?.keyGen(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0)
-        let bobKey = bob?.keyGen(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0)
+        let aliceKey = alice?.keyGen(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0, derivationType: BIP32DerivationType.Khovratovich)
+        let bobKey = bob?.keyGen(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0, derivationType: BIP32DerivationType.Khovratovich)
 
-        let aliceSharedSecret = alice?.ECDH(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0, otherPartyPub: bobKey!, meFirst: true)
-        let bobSharedSecret = bob?.ECDH(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0, otherPartyPub: aliceKey!, meFirst: false)
+        let aliceSharedSecret = alice?.ECDH(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0, otherPartyPub: bobKey!, meFirst: true, derivationType: BIP32DerivationType.Khovratovich)
+        let bobSharedSecret = bob?.ECDH(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0, otherPartyPub: aliceKey!, meFirst: false, derivationType: BIP32DerivationType.Khovratovich)
 
         XCTAssertNotEqual(aliceKey, bobKey)
         XCTAssertEqual(aliceSharedSecret, bobSharedSecret)
@@ -526,8 +526,8 @@ final class Bip32Ed25519Tests: XCTestCase {
 
         // Reverse concatenation order
 
-        let aliceSharedSecret2 = alice?.ECDH(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0, otherPartyPub: bobKey!, meFirst: false)
-        let bobSharedSecret2 = bob?.ECDH(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0, otherPartyPub: aliceKey!, meFirst: true)
+        let aliceSharedSecret2 = alice?.ECDH(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0, otherPartyPub: bobKey!, meFirst: false, derivationType: BIP32DerivationType.Khovratovich)
+        let bobSharedSecret2 = bob?.ECDH(context: KeyContext.Identity, account: 0, change: 0, keyIndex: 0, otherPartyPub: aliceKey!, meFirst: true, derivationType: BIP32DerivationType.Khovratovich)
 
         XCTAssertNotEqual(aliceSharedSecret, aliceSharedSecret2)
         XCTAssertNotEqual(bobSharedSecret, bobSharedSecret2)
