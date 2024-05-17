@@ -236,7 +236,6 @@ public class Bip32Ed25519 {
     }
 
     func deriveKey(rootKey: Data, bip44Path: [UInt32], isPrivate: Bool = true, derivationType: BIP32DerivationType) -> Data {
-
         // Public Key SOFT derivations are possible without using the private key of the parent node
         // Could be an implementation choice.
         // Example:
@@ -248,7 +247,7 @@ public class Bip32Ed25519 {
         // let extPub: Data = nodePublic + nodeCC
         // let publicKey: Data = deriveChildNodePublic(extendedKey: extPub, index: bip44Path[4]).subdata(in: 0..<32)
 
-        let g: UInt32 = UInt32(derivationType.rawValue)
+        let g = UInt32(derivationType.rawValue)
 
         var derived = rootKey
         for i in 0 ..< bip44Path.count {
@@ -265,7 +264,6 @@ public class Bip32Ed25519 {
         keyIndex: UInt32,
         derivationType: BIP32DerivationType = BIP32DerivationType.Peikert
     ) -> Data {
-
         let rootKey: Data = fromSeed(seed)
         let bip44Path: [UInt32] = getBIP44PathFromContext(context: context, account: account, change: change, keyIndex: keyIndex)
 
@@ -305,7 +303,6 @@ public class Bip32Ed25519 {
         prefixEncodedTx: Data,
         derivationType: BIP32DerivationType = BIP32DerivationType.Peikert
     ) -> Data {
-
         let bip44Path: [UInt32] = getBIP44PathFromContext(context: context, account: account, change: change, keyIndex: keyIndex)
         return rawSign(bip44Path: bip44Path, message: prefixEncodedTx, derivationType: derivationType)
     }
@@ -370,7 +367,6 @@ public class Bip32Ed25519 {
         metadata: SignMetadata,
         derivationType: BIP32DerivationType = BIP32DerivationType.Peikert
     ) throws -> Data {
-
         let valid = try validateData(data: data, metadata: metadata)
 
         if !valid {
@@ -424,7 +420,6 @@ public class Bip32Ed25519 {
         meFirst: Bool,
         derivationType: BIP32DerivationType = BIP32DerivationType.Peikert
     ) -> Data {
-
         let rootKey = fromSeed(seed)
         let publicKey = keyGen(context: context, account: account, change: change, keyIndex: keyIndex, derivationType: derivationType)
         let privateKey = deriveKey(
