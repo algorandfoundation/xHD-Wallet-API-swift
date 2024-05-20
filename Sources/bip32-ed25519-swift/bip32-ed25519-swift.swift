@@ -28,7 +28,11 @@ public enum KeyContext: UInt32 {
 }
 
 public enum BIP32DerivationType: UInt32 {
+    // standard Ed25519 bip32 derivations based of: https://acrobat.adobe.com/id/urn:aaid:sc:EU:04fe29b0-ea1a-478b-a886-9bb558a5242a
+    // Defines 32 bits to be zeroed from each derived zL
     case Khovratovich = 32
+    // Derivations based on Peikert's ammendments to the original BIP32-Ed25519
+    // Picking only 9 bits to be zeroed from each derived zL
     case Peikert = 9
 }
 
@@ -172,6 +176,38 @@ public class Bip32Ed25519 {
         return (z, childChainCode)
     }
 
+    func deriveChildNodePublic(extendedKey: Data, keyIndex: UInt32, g: UInt32 = 9) throws -> Data {
+        guard keyIndex < 0x80000000 else {
+            throw DataValidationException(message: "Cannot derive public key with harden")
+        }
+        
+        let pk = extendedKey.subdata(in: 0..<32)
+        let cc = extendedKey.subdata(in: 32..<64)
+        
+        var data = Data(count: 1 + 32 + 4)
+
+        var indexLE = keyIndex.littleEndian
+        data.replaceSubrange(33..<37, with: Data(bytes: &indexLE, count: 4))
+        data.replaceSubrange(1..<33, with: pk)
+
+        // Step 1: Compute Z
+        data[0] = 0x02
+        let z = CryptoUtils.hmacSha512(key: cc, data: data)
+        
+        // Step 2: Compute child public key
+        let zL = trunc256MinusGBits(zl: z.subdata(in: 0..<32), g: UInt32(g))
+        let left = BigUInt(Data(zL.reversed())) * BigUInt(8)
+        let p = SodiumHelper.scalarMultEd25519BaseNoClamp(Data(left.serialize().reversed()))
+        
+        // Step 3: Compute child chain code
+        data[0] = 0x03
+        let fullChildChainCode = CryptoUtils.hmacSha512(key: cc, data: data)
+        let childChainCode = fullChildChainCode.subdata(in: 32..<64)
+        
+        return SodiumHelper.cryptoCoreEd25519ScalarAdd(p, pk) + childChainCode
+    }
+
+
     func deriveChildNodePrivate(extendedKey: Data, index: UInt32, g: UInt32) -> Data {
         let kl = extendedKey.subdata(in: 0 ..< ED25519_SCALAR_SIZE)
         let kr = extendedKey.subdata(in: ED25519_SCALAR_SIZE ..< 2 * ED25519_SCALAR_SIZE)
@@ -254,7 +290,7 @@ public class Bip32Ed25519 {
             derived = deriveChildNodePrivate(extendedKey: derived, index: bip44Path[i], g: g)
         }
 
-        return isPrivate ? derived : SodiumHelper.scalarMultEd25519BaseNoClamp(derived.subdata(in: 0 ..< ED25519_SCALAR_SIZE))
+        return isPrivate ? derived : SodiumHelper.scalarMultEd25519BaseNoClamp(derived.subdata(in: 0 ..< ED25519_SCALAR_SIZE)) + derived.subdata(in: 64 ..< 96)
     }
 
     public func keyGen(
@@ -267,7 +303,7 @@ public class Bip32Ed25519 {
         let rootKey: Data = fromSeed(seed)
         let bip44Path: [UInt32] = getBIP44PathFromContext(context: context, account: account, change: change, keyIndex: keyIndex)
 
-        return deriveKey(rootKey: rootKey, bip44Path: bip44Path, isPrivate: false, derivationType: derivationType)
+        return deriveKey(rootKey: rootKey, bip44Path: bip44Path, isPrivate: false, derivationType: derivationType).prefix(32)
     }
 
     private func rawSign(bip44Path: [UInt32], message: Data, derivationType: BIP32DerivationType) -> Data {
