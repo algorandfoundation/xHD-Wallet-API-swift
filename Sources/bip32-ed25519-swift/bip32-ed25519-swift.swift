@@ -250,32 +250,6 @@ public class Bip32Ed25519 {
         return result
     }
 
-    // func trunc256MinusGBits(zl: Data, g: Int) -> Data {
-    //     let sliceBits = Int(256 - g)
-    //     let sliceBytes = (sliceBits + 7) / 8
-
-    //     // error out if we use this without the minimum bytes necessary
-    //     guard zl.count >= sliceBytes else {
-    //         fatalError("Not enough data in zl to slice")
-    //     }
-
-    //     var slice = zl.subdata(in: 0 ..< sliceBytes)
-
-    //     // add padding if needed
-    //     if sliceBytes < 32 {
-    //         slice += [UInt8](repeating: 0, count: 32 - slice.count)
-    //     }
-
-    //     // calc bits and mask
-    //     let maskBits = sliceBytes * 8 - sliceBits
-    //     if maskBits > 0 {
-    //         let mask = UInt8((1 << (8 - maskBits)) - 1)
-    //         slice[sliceBytes - 1] &= mask
-    //     }
-
-    //     return Data(slice.reversed())
-    // }
-
     func trunc256MinusGBits(zl: Data, g: Int) -> Data {
         var truncated = zl
         var remainingBits = g
