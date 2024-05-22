@@ -27,7 +27,7 @@ public enum KeyContext: UInt32 {
     case Identity = 1
 }
 
-public enum BIP32DerivationType: UInt32 {
+public enum BIP32DerivationType: Int {
     // standard Ed25519 bip32 derivations based of: https://acrobat.adobe.com/id/urn:aaid:sc:EU:04fe29b0-ea1a-478b-a886-9bb558a5242a
     // Defines 32 bits to be zeroed from each derived zL
     case Khovratovich = 32
@@ -176,39 +176,43 @@ public class Bip32Ed25519 {
         return (z, childChainCode)
     }
 
-    func deriveChildNodePublic(extendedKey: Data, keyIndex: UInt32, g: UInt32 = 9) throws -> Data {
-        guard keyIndex < 0x80000000 else {
+    func deriveChildNodePublic(extendedKey: Data, keyIndex: UInt32, g: Int = 9) throws -> Data {
+        guard keyIndex < 0x8000_0000 else {
             throw DataValidationException(message: "Cannot derive public key with harden")
         }
-        
-        let pk = extendedKey.subdata(in: 0..<32)
-        let cc = extendedKey.subdata(in: 32..<64)
-        
-        var data = Data(count: 1 + 32 + 4)
+
+        let pk = extendedKey.subdata(in: 0 ..< 32)
+        let cc = extendedKey.subdata(in: 32 ..< 64)
 
         var indexLE = keyIndex.littleEndian
-        data.replaceSubrange(33..<37, with: Data(bytes: &indexLE, count: 4))
-        data.replaceSubrange(1..<33, with: pk)
-
-        // Step 1: Compute Z
+        let indexData = Data(bytes: &indexLE, count: MemoryLayout.size(ofValue: indexLE))
+        
+        var data = Data(count: 1 + ED25519_SCALAR_SIZE + indexData.count)
+        data.replaceSubrange(1 + ED25519_SCALAR_SIZE ..< 1 + ED25519_SCALAR_SIZE + indexData.count, with: indexData)
+        data.replaceSubrange(1 ..< 1 + pk.count, with: pk)
         data[0] = 0x02
+
         let z = CryptoUtils.hmacSha512(key: cc, data: data)
-        
+        let zL = trunc256MinusGBits(zl: z.subdata(in: 0 ..< ED25519_SCALAR_SIZE), g: g)
+
         // Step 2: Compute child public key
-        let zL = trunc256MinusGBits(zl: z.subdata(in: 0..<32), g: UInt32(g))
         let left = BigUInt(Data(zL.reversed())) * BigUInt(8)
-        let p = SodiumHelper.scalarMultEd25519BaseNoClamp(Data(left.serialize().reversed()))
-        
+        let leftData = Data(left.serialize().reversed())
+
+        let p = SodiumHelper.scalarMultEd25519BaseNoClamp(leftData)
+
         // Step 3: Compute child chain code
         data[0] = 0x03
         let fullChildChainCode = CryptoUtils.hmacSha512(key: cc, data: data)
-        let childChainCode = fullChildChainCode.subdata(in: 32..<64)
-        
-        return SodiumHelper.cryptoCoreEd25519ScalarAdd(p, pk) + childChainCode
+        let childChainCode = fullChildChainCode.subdata(in: 32 ..< 64)
+
+        var returnData = SodiumHelper.cryptoCoreEd25519Add(p, pk)
+        returnData.append(childChainCode)
+
+        return returnData
     }
 
-
-    func deriveChildNodePrivate(extendedKey: Data, index: UInt32, g: UInt32) -> Data {
+    func deriveChildNodePrivate(extendedKey: Data, index: UInt32, g: Int) -> Data {
         let kl = extendedKey.subdata(in: 0 ..< ED25519_SCALAR_SIZE)
         let kr = extendedKey.subdata(in: ED25519_SCALAR_SIZE ..< 2 * ED25519_SCALAR_SIZE)
         let cc = extendedKey.subdata(in: 2 * ED25519_SCALAR_SIZE ..< 3 * ED25519_SCALAR_SIZE)
@@ -222,7 +226,8 @@ public class Bip32Ed25519 {
 
         // left = kl + 8 * trunc28(zl)
         // right = zr + kr
-        let left = BigUInt(Data(kl.reversed())) + BigUInt(trunc256MinusGBits(zl: zl, g: g)) * BigUInt(8)
+
+        let left = BigUInt(Data(kl.reversed())) + BigUInt(Data(trunc256MinusGBits(zl: zl, g: g).reversed())) * BigUInt(8)
         let right = BigUInt(Data(kr.reversed())) + BigUInt(Data(zr.reversed()))
 
         // Reverse byte order back after calculations
@@ -245,30 +250,50 @@ public class Bip32Ed25519 {
         return result
     }
 
-    func trunc256MinusGBits(zl: Data, g: UInt32) -> Data {
-        let sliceBits = Int(256 - g)
-        let sliceBytes = (sliceBits + 7) / 8
+    // func trunc256MinusGBits(zl: Data, g: Int) -> Data {
+    //     let sliceBits = Int(256 - g)
+    //     let sliceBytes = (sliceBits + 7) / 8
 
-        // error out if we use this without the minimum bytes necessary
-        guard zl.count >= sliceBytes else {
-            fatalError("Not enough data in zl to slice")
+    //     // error out if we use this without the minimum bytes necessary
+    //     guard zl.count >= sliceBytes else {
+    //         fatalError("Not enough data in zl to slice")
+    //     }
+
+    //     var slice = zl.subdata(in: 0 ..< sliceBytes)
+
+    //     // add padding if needed
+    //     if sliceBytes < 32 {
+    //         slice += [UInt8](repeating: 0, count: 32 - slice.count)
+    //     }
+
+    //     // calc bits and mask
+    //     let maskBits = sliceBytes * 8 - sliceBits
+    //     if maskBits > 0 {
+    //         let mask = UInt8((1 << (8 - maskBits)) - 1)
+    //         slice[sliceBytes - 1] &= mask
+    //     }
+
+    //     return Data(slice.reversed())
+    // }
+
+    func trunc256MinusGBits(zl: Data, g: Int) -> Data {
+        var truncated = zl
+        var remainingBits = g
+
+        // start from the last byte and move backwards
+        for i in (0 ..< truncated.count).reversed() {
+            if remainingBits >= 8 {
+                truncated[i] = 0
+                remainingBits -= 8
+            } else {
+                // let mask = UInt8(0xFF << remainingBits)
+                let mask = UInt8((1 << (8 - remainingBits)) - 1)
+                truncated[i] &= mask
+                break
+            }
         }
 
-        var slice = zl.subdata(in: 0 ..< sliceBytes)
-
-        // add padding if needed
-        if sliceBytes < 32 {
-            slice += [UInt8](repeating: 0, count: 32 - slice.count)
-        }
-
-        // calc bits and mask
-        let maskBits = sliceBytes * 8 - sliceBits
-        if maskBits > 0 {
-            let mask = UInt8((1 << (8 - maskBits)) - 1)
-            slice[sliceBytes - 1] &= mask
-        }
-
-        return Data(slice.reversed())
+        return truncated
     }
 
     func deriveKey(rootKey: Data, bip44Path: [UInt32], isPrivate: Bool = true, derivationType: BIP32DerivationType) -> Data {
@@ -283,7 +308,7 @@ public class Bip32Ed25519 {
         // let extPub: Data = nodePublic + nodeCC
         // let publicKey: Data = deriveChildNodePublic(extendedKey: extPub, index: bip44Path[4]).subdata(in: 0..<32)
 
-        let g = UInt32(derivationType.rawValue)
+        let g = derivationType.rawValue
 
         var derived = rootKey
         for i in 0 ..< bip44Path.count {

@@ -131,61 +131,54 @@ final class Bip32Ed25519Tests: XCTestCase {
         }
     }
 
-    // func testDeriveChildNodePrivatePeikert() throws {
-    //     let indices = [c!.harden(UInt32(283)), UInt32(2_147_483_648)]
-    //     let extendedKeys = [Data([48, 154, 117, 1, 19, 88, 124, 110, 192, 144, 35, 82, 48, 99, 166, 47, 18, 134, 206, 50, 87, 44, 30, 64, 138, 171, 185, 113, 221, 236, 143, 70, 76, 201, 164, 26, 123, 221, 6, 39, 132, 236, 107, 242, 76, 65, 18, 121, 215, 206, 105, 135, 176, 121, 240, 198, 111, 6, 17, 198, 125, 22, 245, 114, 141, 123, 149, 66, 11, 250, 54, 180, 175, 41, 166, 195, 76, 15, 154, 235, 246, 49, 203, 70, 79, 22, 94, 165, 138, 89, 21, 152, 23, 108, 180, 148]), Data([152, 225, 53, 235, 111, 189, 16, 80, 5, 187, 222, 103, 51, 25, 9, 175, 172, 210, 205, 151, 195, 80, 249, 179, 162, 157, 197, 181, 222, 236, 143, 70, 235, 179, 35, 29, 125, 172, 171, 5, 131, 195, 126, 183, 57, 159, 45, 69, 232, 136, 154, 57, 174, 63, 130, 164, 117, 24, 105, 139, 121, 92, 17, 211, 107, 102, 4, 2, 204, 196, 48, 71, 244, 82, 253, 123, 214, 63, 171, 147, 161, 188, 133, 206, 203, 205, 213, 26, 83, 29, 133, 228, 82, 216, 30, 127])]
-    //     let expectedOutputs = [Data([152, 225, 53, 235, 111, 189, 16, 80, 5, 187, 222, 103, 51, 25, 9, 175, 172, 210, 205, 151, 195, 80, 249, 179, 162, 157, 197, 181, 222, 236, 143, 70, 235, 179, 35, 29, 125, 172, 171, 5, 131, 195, 126, 183, 57, 159, 45, 69, 232, 136, 154, 57, 174, 63, 130, 164, 117, 24, 105, 139, 121, 92, 17, 211, 107, 102, 4, 2, 204, 196, 48, 71, 244, 82, 253, 123, 214, 63, 171, 147, 161, 188, 133, 206, 203, 205, 213, 26, 83, 29, 133, 228, 82, 216, 30, 127]), Data([248, 91, 210, 62, 156, 144, 108, 177, 63, 167, 126, 1, 132, 58, 45, 178, 246, 252, 188, 221, 105, 104, 97, 54, 232, 92, 190, 228, 226, 236, 143, 70, 187, 122, 35, 69, 101, 182, 49, 122, 216, 252, 71, 107, 197, 176, 56, 18, 136, 95, 146, 175, 1, 151, 252, 83, 155, 22, 27, 106, 47, 67, 37, 75, 213, 25, 13, 246, 205, 204, 73, 226, 124, 111, 209, 124, 76, 32, 166, 121, 128, 234, 224, 65, 27, 230, 42, 228, 35, 106, 79, 138, 154, 149, 109, 227])]
-
-    //     for i in 0 ..< indices.count {
-    //         let output = c!.deriveChildNodePrivate(extendedKey: extendedKeys[i], index: indices[i], g: BIP32DerivationType.Peikert.rawValue)
-    //         XCTAssertEqual(output, expectedOutputs[i])
-    //         XCTAssertEqual(output.count, 96)
-    //     }
-    // }
-
     func testTrunc256MinusGBits() throws {
         let testCases: [(zl: Data, g: Int, expected: Data)] = [
             (
                 Data([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]),
                 9,
-                Data([0x00, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
+                Data([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0x00])
             ),
             (
                 Data([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]),
                 32,
-                Data([0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
+                Data([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00])
             ),
         ]
 
         for (zl, g, expected) in testCases {
-            let result = c!.trunc256MinusGBits(zl: zl, g: UInt32(g))
+            let result = c!.trunc256MinusGBits(zl: zl, g: g)
             XCTAssertEqual(result, expected, "Failed for g=\(g)")
         }
     }
 
-    // func testDeriveKey() throws {
-    //     let rootkey = Data([168, 186, 128, 2, 137, 34, 217, 252, 250, 5, 92, 120, 174, 222, 85, 181, 197, 117, 188, 216, 213, 165, 49, 104, 237, 244, 95, 54, 217, 236, 143, 70, 148, 89, 43, 75, 200, 146, 144, 117, 131, 226, 38, 105, 236, 223, 27, 4, 9, 169, 243, 189, 85, 73, 242, 221, 117, 27, 81, 54, 9, 9, 205, 5, 121, 107, 146, 6, 236, 48, 225, 66, 233, 75, 121, 10, 152, 128, 91, 249, 153, 4, 43, 85, 4, 105, 99, 23, 78, 230, 206, 226, 208, 55, 89, 70])
-    //     let bip44Path = [UInt32]([2_147_483_692, 2_147_483_931, 2_147_483_648, 0, 0])
-    //     let expectedResultPublic = Data([98, 254, 131, 43, 122, 209, 5, 68, 190, 131, 55, 166, 112, 67, 94, 80, 100, 174, 74, 102, 231, 123, 215, 137, 9, 118, 91, 70, 181, 118, 166, 243])
-
-    //     let outputPublic = c!.deriveKey(rootKey: rootkey, bip44Path: bip44Path, isPrivate: false, derivationType: BIP32DerivationType.Khovratovich)
-    //     XCTAssertEqual(outputPublic, expectedResultPublic)
-
-    //     let expectedResultPrivate = Data([128, 16, 43, 185, 143, 170, 195, 253, 23, 137, 194, 198, 197, 89, 211, 113, 92, 217, 202, 194, 40, 214, 212, 176, 247, 106, 35, 70, 234, 236, 143, 70, 1, 174, 20, 40, 64, 137, 36, 62, 147, 107, 233, 27, 40, 35, 204, 20, 47, 117, 49, 53, 234, 255, 27, 174, 32, 211, 238, 199, 120, 112, 197, 68, 159, 146, 199, 144, 215, 171, 174, 224, 224, 10, 78, 193, 251, 120, 161, 212, 56, 232, 204, 247, 194, 186, 217, 160, 24, 165, 191, 154, 93, 81, 0, 117])
-    //     let outputPrivate = c!.deriveKey(rootKey: rootkey, bip44Path: bip44Path, isPrivate: true, derivationType: BIP32DerivationType.Khovratovich)
-    //     XCTAssertEqual(outputPrivate, expectedResultPrivate)
-    // }
-
     func testDeriveKey() throws {
         let rootkey = Data([168, 186, 128, 2, 137, 34, 217, 252, 250, 5, 92, 120, 174, 222, 85, 181, 197, 117, 188, 216, 213, 165, 49, 104, 237, 244, 95, 54, 217, 236, 143, 70, 148, 89, 43, 75, 200, 146, 144, 117, 131, 226, 38, 105, 236, 223, 27, 4, 9, 169, 243, 189, 85, 73, 242, 221, 117, 27, 81, 54, 9, 9, 205, 5, 121, 107, 146, 6, 236, 48, 225, 66, 233, 75, 121, 10, 152, 128, 91, 249, 153, 4, 43, 85, 4, 105, 99, 23, 78, 230, 206, 226, 208, 55, 89, 70])
-        let bip44Path = c!.getBIP44PathFromContext(context: KeyContext.Address, account: 0, change: 0, keyIndex: 0)
+        let bip44Path = [UInt32]([2_147_483_692, 2_147_483_931, 2_147_483_648, 0, 0])
         let expectedResultPublic = Data([98, 254, 131, 43, 122, 209, 5, 68, 190, 131, 55, 166, 112, 67, 94, 80, 100, 174, 74, 102, 231, 123, 215, 137, 9, 118, 91, 70, 181, 118, 166, 243])
 
         let outputPublic = c!.deriveKey(rootKey: rootkey, bip44Path: bip44Path, isPrivate: false, derivationType: BIP32DerivationType.Khovratovich)
         XCTAssertEqual(outputPublic.prefix(32), expectedResultPublic)
 
+        let expectedResultPrivate = Data([128, 16, 43, 185, 143, 170, 195, 253, 23, 137, 194, 198, 197, 89, 211, 113, 92, 217, 202, 194, 40, 214, 212, 176, 247, 106, 35, 70, 234, 236, 143, 70, 1, 174, 20, 40, 64, 137, 36, 62, 147, 107, 233, 27, 40, 35, 204, 20, 47, 117, 49, 53, 234, 255, 27, 174, 32, 211, 238, 199, 120, 112, 197, 68, 159, 146, 199, 144, 215, 171, 174, 224, 224, 10, 78, 193, 251, 120, 161, 212, 56, 232, 204, 247, 194, 186, 217, 160, 24, 165, 191, 154, 93, 81, 0, 117])
+        let outputPrivate = c!.deriveKey(rootKey: rootkey, bip44Path: bip44Path, isPrivate: true, derivationType: BIP32DerivationType.Khovratovich)
+        XCTAssertEqual(outputPrivate, expectedResultPrivate)
+    }
+
+    func testDeriveChildNodePublic() throws {
+
+        let seed = try Mnemonic.deterministicSeedString(from: "salon zoo engage submit smile frost later decide wing sight chaos renew lizard rely canal coral scene hobby scare step bus leaf tobacco slice")
+        guard let data = Data(hexString: seed) else {
+            return
+        }
+
+        let context = KeyContext.Address
+        let account: UInt32 = 0
+        let change: UInt32 = 0
+
+        let bip44Path: [UInt32] = [c!.harden(44), c!.harden(283), c!.harden(0), 0]
+
         let walletRoot = c!.deriveKey(
-            rootKey: rootkey,
+            rootKey: c!.fromSeed(data),
             bip44Path: bip44Path,
             isPrivate: false,
             derivationType: BIP32DerivationType.Peikert
@@ -193,7 +186,7 @@ final class Bip32Ed25519Tests: XCTestCase {
 
         // should be able to derive all public keys from this root without knowing private information
         // since these are SOFTLY derived
-        
+
         let numPublicKeysToDerive = 10
         for i in 0 ..< numPublicKeysToDerive {
             // assuming in a third party that only has public information
@@ -202,9 +195,9 @@ final class Bip32Ed25519Tests: XCTestCase {
             // i can SOFTLY derive N public keys / addresses from this root
             let derivedKey = try c!.deriveChildNodePublic(extendedKey: walletRoot, keyIndex: UInt32(i), g: BIP32DerivationType.Peikert.rawValue)
             // Deriving from my own wallet where i DO have private information
-            let myKey = c!.keyGen(context: KeyContext.Address, account: 0, change: 0, keyIndex: UInt32(i), derivationType: BIP32DerivationType.Peikert)
+            let myKey = c!.keyGen(context: context, account: account, change: change, keyIndex: UInt32(i), derivationType: BIP32DerivationType.Peikert)
 
-            // they should match 
+            // they should match
             // derivedKey.subarray(0, 32) ==  public key (excluding chaincode)
             XCTAssertEqual(derivedKey.prefix(32), myKey)
         }

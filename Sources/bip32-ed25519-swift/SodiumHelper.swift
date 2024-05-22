@@ -56,6 +56,18 @@ public enum SodiumHelper {
         return Data(output)
     }
 
+    public static func cryptoCoreEd25519Add(_ x: Data, _ y: Data) -> Data {
+        var output = [UInt8](repeating: 0, count: ED25519_SCALAR_SIZE)
+        _ = output.withUnsafeMutableBufferPointer { outputPtr in
+            x.withUnsafeBytes { xPtr in
+                y.withUnsafeBytes { yPtr in
+                    crypto_core_ed25519_add(outputPtr.baseAddress!, xPtr.baseAddress!, yPtr.baseAddress!)
+                }
+            }
+        }
+        return Data(output)
+    }
+
     public static func cryptoCoreEd25519ScalarMul(_ x: Data, _ y: Data) -> Data {
         var output = [UInt8](repeating: 0, count: ED25519_SCALAR_SIZE)
         output.withUnsafeMutableBufferPointer { outputPtr in
