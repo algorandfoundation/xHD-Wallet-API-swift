@@ -186,7 +186,7 @@ public class Bip32Ed25519 {
 
         var indexLE = keyIndex.littleEndian
         let indexData = Data(bytes: &indexLE, count: MemoryLayout.size(ofValue: indexLE))
-        
+
         var data = Data(count: 1 + ED25519_SCALAR_SIZE + indexData.count)
         data.replaceSubrange(1 + ED25519_SCALAR_SIZE ..< 1 + ED25519_SCALAR_SIZE + indexData.count, with: indexData)
         data.replaceSubrange(1 ..< 1 + pk.count, with: pk)
@@ -206,10 +206,10 @@ public class Bip32Ed25519 {
         let fullChildChainCode = CryptoUtils.hmacSha512(key: cc, data: data)
         let childChainCode = fullChildChainCode.subdata(in: 32 ..< 64)
 
-        var returnData = SodiumHelper.cryptoCoreEd25519Add(p, pk)
-        returnData.append(childChainCode)
-
-        return returnData
+        var result = Data()
+        result.append(SodiumHelper.cryptoCoreEd25519Add(p, pk))
+        result.append(childChainCode)
+        return result
     }
 
     func deriveChildNodePrivate(extendedKey: Data, index: UInt32, g: Int) -> Data {

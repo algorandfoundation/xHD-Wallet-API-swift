@@ -165,7 +165,6 @@ final class Bip32Ed25519Tests: XCTestCase {
     }
 
     func testDeriveChildNodePublic() throws {
-
         let seed = try Mnemonic.deterministicSeedString(from: "salon zoo engage submit smile frost later decide wing sight chaos renew lizard rely canal coral scene hobby scare step bus leaf tobacco slice")
         guard let data = Data(hexString: seed) else {
             return
@@ -200,6 +199,44 @@ final class Bip32Ed25519Tests: XCTestCase {
             // they should match
             // derivedKey.subarray(0, 32) ==  public key (excluding chaincode)
             XCTAssertEqual(derivedKey.prefix(32), myKey)
+        }
+    }
+
+    func testDeriveChildNodePublicHardenedChange() throws {
+        let seed = try Mnemonic.deterministicSeedString(from: "salon zoo engage submit smile frost later decide wing sight chaos renew lizard rely canal coral scene hobby scare step bus leaf tobacco slice")
+        guard let data = Data(hexString: seed) else {
+            return
+        }
+
+        let context = KeyContext.Address
+        let account: UInt32 = 0
+        let change: UInt32 = 0
+
+        let bip44Path: [UInt32] = [c!.harden(44), c!.harden(283), c!.harden(0), c!.harden(0)]
+
+        let walletRoot = c!.deriveKey(
+            rootKey: c!.fromSeed(data),
+            bip44Path: bip44Path,
+            isPrivate: false,
+            derivationType: BIP32DerivationType.Peikert
+        )
+
+        // should be able to derive all public keys from this root without knowing private information
+        // since these are SOFTLY derived
+
+        let numPublicKeysToDerive = 10
+        for i in 0 ..< numPublicKeysToDerive {
+            // assuming in a third party that only has public information
+            // I'm provided with the wallet level m'/44'/283'/0'/0 root [public, chaincode]
+            // no private information is shared
+            // i can SOFTLY derive N public keys / addresses from this root
+            let derivedKey = try c!.deriveChildNodePublic(extendedKey: walletRoot, keyIndex: UInt32(i), g: BIP32DerivationType.Peikert.rawValue)
+            // Deriving from my own wallet where i DO have private information
+            let myKey = c!.keyGen(context: context, account: account, change: change, keyIndex: UInt32(i), derivationType: BIP32DerivationType.Peikert)
+
+            // they should match
+            // derivedKey.subarray(0, 32) ==  public key (excluding chaincode)
+            XCTAssertNotEqual(derivedKey.prefix(32), myKey)
         }
     }
 
