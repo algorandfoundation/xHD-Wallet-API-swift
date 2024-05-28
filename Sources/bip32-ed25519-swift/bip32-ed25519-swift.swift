@@ -178,7 +178,7 @@ public class Bip32Ed25519 {
         return (z, childChainCode)
     }
 
-    func deriveChildNodePublic(extendedKey: Data, index: UInt32, g: BIP32DerivationType = BIP32DerivationType.Peikert) throws -> Data {
+    public func deriveChildNodePublic(extendedKey: Data, index: UInt32, g: BIP32DerivationType = BIP32DerivationType.Peikert) throws -> Data {
         guard index < 0x8000_0000 else {
             throw DataValidationException(message: "Cannot derive public key with harden")
         }
@@ -214,7 +214,7 @@ public class Bip32Ed25519 {
         return result
     }
 
-    func deriveChildNodePrivate(extendedKey: Data, index: UInt32, g: BIP32DerivationType) -> Data {
+    public func deriveChildNodePrivate(extendedKey: Data, index: UInt32, g: BIP32DerivationType) -> Data {
         let kl = extendedKey.subdata(in: 0 ..< ED25519_SCALAR_SIZE)
         let kr = extendedKey.subdata(in: ED25519_SCALAR_SIZE ..< 2 * ED25519_SCALAR_SIZE)
         let cc = extendedKey.subdata(in: 2 * ED25519_SCALAR_SIZE ..< 3 * ED25519_SCALAR_SIZE)
@@ -272,7 +272,7 @@ public class Bip32Ed25519 {
         return truncated
     }
 
-    func deriveKey(rootKey: Data, bip44Path: [UInt32], isPrivate: Bool = true, derivationType: BIP32DerivationType) -> Data {
+    public func deriveKey(rootKey: Data, bip44Path: [UInt32], isPrivate: Bool = true, derivationType: BIP32DerivationType) -> Data {
         // Public Key SOFT derivations are possible without using the private key of the parent node
         // Could be an implementation choice.
         // Example:
