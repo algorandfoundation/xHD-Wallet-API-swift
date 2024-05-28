@@ -82,10 +82,15 @@ Note that under the hood the sharedSecret is calculated using x25519 form.
 
 ### Deriving Child Public Keys
 
-You can also utilize `deriveKey` to derive extended public keys thus allowing `deriveChildNodePublic` to softly derive `N` public keys / addresses using a single extended key / root.
-
+You can also utilize `deriveKey` to derive extended public keys thus allowing `deriveChildNodePublic` to softly derive `N` public keys / addresses using a single extended key / root. 
 > [!IMPORTANT]
-> We distinguish between our 32 byte public key (pk) and the 64 byte extended public key (xpk) where xpk is used to derive child nodes in `deriveChildNodePublic` & `deriveChildNodePrivate`
+> We distinguish between our 32 byte public key (pk) and the 64 byte extended public key (xpk) where xpk is used to derive child nodes in `deriveChildNodePublic` & `deriveChildNodePrivate`. The xpk is a concatenation of the pk & the 32 byte chaincode which serves as a key for the HMAC functions.
+>
+> **xpk should be kept secret** unless you want to allow someone else to derive descendant keys.
+
+child public key derivation is relevant at the unhardened levels
+<br><br>
+e.g. in bip44 get it at the account level and then derive publicly for change and keyindex
 
 ```swift
 let bip44Path: [UInt32] = [c.harden(44), c.harden(283), c.harden(0), 0]
@@ -97,7 +102,6 @@ let walletRoot = c.deriveKey(
     derivationType: BIP32DerivationType.Peikert
 )
 ```
-
 The output of `deriveKey` is an xpk which can be shared & using the following
 ```swift
 let derivedKey = try c.deriveChildNodePublic(extendedKey: walletRoot, index: UInt32(i), g: BIP32DerivationType.Peikert)
