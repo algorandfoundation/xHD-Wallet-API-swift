@@ -125,22 +125,22 @@ final class Bip32Ed25519Tests: XCTestCase {
         let expectedOutputs = [Data([152, 225, 53, 235, 111, 189, 16, 80, 5, 187, 222, 103, 51, 25, 9, 175, 172, 210, 205, 151, 195, 80, 249, 179, 162, 157, 197, 181, 222, 236, 143, 70, 235, 179, 35, 29, 125, 172, 171, 5, 131, 195, 126, 183, 57, 159, 45, 69, 232, 136, 154, 57, 174, 63, 130, 164, 117, 24, 105, 139, 121, 92, 17, 211, 107, 102, 4, 2, 204, 196, 48, 71, 244, 82, 253, 123, 214, 63, 171, 147, 161, 188, 133, 206, 203, 205, 213, 26, 83, 29, 133, 228, 82, 216, 30, 127]), Data([248, 91, 210, 62, 156, 144, 108, 177, 63, 167, 126, 1, 132, 58, 45, 178, 246, 252, 188, 221, 105, 104, 97, 54, 232, 92, 190, 228, 226, 236, 143, 70, 187, 122, 35, 69, 101, 182, 49, 122, 216, 252, 71, 107, 197, 176, 56, 18, 136, 95, 146, 175, 1, 151, 252, 83, 155, 22, 27, 106, 47, 67, 37, 75, 213, 25, 13, 246, 205, 204, 73, 226, 124, 111, 209, 124, 76, 32, 166, 121, 128, 234, 224, 65, 27, 230, 42, 228, 35, 106, 79, 138, 154, 149, 109, 227])]
 
         for i in 0 ..< indices.count {
-            let output = c!.deriveChildNodePrivate(extendedKey: extendedKeys[i], index: indices[i], g: BIP32DerivationType.Khovratovich.rawValue)
+            let output = c!.deriveChildNodePrivate(extendedKey: extendedKeys[i], index: indices[i], g: BIP32DerivationType.Khovratovich)
             XCTAssertEqual(output, expectedOutputs[i])
             XCTAssertEqual(output.count, 96)
         }
     }
 
     func testTrunc256MinusGBits() throws {
-        let testCases: [(zl: Data, g: Int, expected: Data)] = [
+        let testCases: [(zl: Data, g: BIP32DerivationType, expected: Data)] = [
             (
                 Data([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]),
-                9,
+                BIP32DerivationType.Peikert,
                 Data([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0x00])
             ),
             (
                 Data([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]),
-                32,
+                BIP32DerivationType.Khovratovich,
                 Data([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00])
             ),
         ]
@@ -192,7 +192,7 @@ final class Bip32Ed25519Tests: XCTestCase {
             // I'm provided with the wallet level m'/44'/283'/0'/0 root [public, chaincode]
             // no private information is shared
             // i can SOFTLY derive N public keys / addresses from this root
-            let derivedKey = try c!.deriveChildNodePublic(extendedKey: walletRoot, keyIndex: UInt32(i), g: BIP32DerivationType.Peikert.rawValue)
+            let derivedKey = try c!.deriveChildNodePublic(extendedKey: walletRoot, index: UInt32(i), g: BIP32DerivationType.Peikert)
             // Deriving from my own wallet where i DO have private information
             let myKey = c!.keyGen(context: context, account: account, change: change, keyIndex: UInt32(i), derivationType: BIP32DerivationType.Peikert)
 
@@ -230,7 +230,7 @@ final class Bip32Ed25519Tests: XCTestCase {
             // I'm provided with the wallet level m'/44'/283'/0'/0 root [public, chaincode]
             // no private information is shared
             // i can SOFTLY derive N public keys / addresses from this root
-            let derivedKey = try c!.deriveChildNodePublic(extendedKey: walletRoot, keyIndex: UInt32(i), g: BIP32DerivationType.Peikert.rawValue)
+            let derivedKey = try c!.deriveChildNodePublic(extendedKey: walletRoot, index: UInt32(i), g: BIP32DerivationType.Peikert)
             // Deriving from my own wallet where i DO have private information
             let myKey = c!.keyGen(context: context, account: account, change: change, keyIndex: UInt32(i), derivationType: BIP32DerivationType.Peikert)
 

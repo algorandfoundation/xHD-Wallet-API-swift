@@ -91,6 +91,8 @@ extension Data {
 
 let sharedSecretHashBufferSize = 32
 let ED25519_SCALAR_SIZE = 32
+let ED25519_POINT_SIZE = 32
+let CHAIN_CODE_SIZE = 32
 
 public class Bip32Ed25519 {
     private var seed: Data
@@ -176,15 +178,15 @@ public class Bip32Ed25519 {
         return (z, childChainCode)
     }
 
-    func deriveChildNodePublic(extendedKey: Data, keyIndex: UInt32, g: Int = 9) throws -> Data {
-        guard keyIndex < 0x8000_0000 else {
+    func deriveChildNodePublic(extendedKey: Data, index: UInt32, g: BIP32DerivationType = BIP32DerivationType.Peikert) throws -> Data {
+        guard index < 0x8000_0000 else {
             throw DataValidationException(message: "Cannot derive public key with harden")
         }
 
-        let pk = extendedKey.subdata(in: 0 ..< 32)
-        let cc = extendedKey.subdata(in: 32 ..< 64)
+        let pk = extendedKey.subdata(in: 0 ..< ED25519_POINT_SIZE)
+        let cc = extendedKey.subdata(in: ED25519_POINT_SIZE ..< ED25519_POINT_SIZE + CHAIN_CODE_SIZE)
 
-        var indexLE = keyIndex.littleEndian
+        var indexLE = index.littleEndian
         let indexData = Data(bytes: &indexLE, count: MemoryLayout.size(ofValue: indexLE))
 
         var data = Data(count: 1 + ED25519_SCALAR_SIZE + indexData.count)
@@ -212,7 +214,7 @@ public class Bip32Ed25519 {
         return result
     }
 
-    func deriveChildNodePrivate(extendedKey: Data, index: UInt32, g: Int) -> Data {
+    func deriveChildNodePrivate(extendedKey: Data, index: UInt32, g: BIP32DerivationType) -> Data {
         let kl = extendedKey.subdata(in: 0 ..< ED25519_SCALAR_SIZE)
         let kr = extendedKey.subdata(in: ED25519_SCALAR_SIZE ..< 2 * ED25519_SCALAR_SIZE)
         let cc = extendedKey.subdata(in: 2 * ED25519_SCALAR_SIZE ..< 3 * ED25519_SCALAR_SIZE)
@@ -250,9 +252,9 @@ public class Bip32Ed25519 {
         return result
     }
 
-    func trunc256MinusGBits(zl: Data, g: Int) -> Data {
+    func trunc256MinusGBits(zl: Data, g: BIP32DerivationType) -> Data {
         var truncated = zl
-        var remainingBits = g
+        var remainingBits = g.rawValue
 
         // start from the last byte and move backwards
         for i in (0 ..< truncated.count).reversed() {
@@ -282,14 +284,14 @@ public class Bip32Ed25519 {
         // let extPub: Data = nodePublic + nodeCC
         // let publicKey: Data = deriveChildNodePublic(extendedKey: extPub, index: bip44Path[4]).subdata(in: 0..<32)
 
-        let g = derivationType.rawValue
+        let g = derivationType
 
         var derived = rootKey
         for i in 0 ..< bip44Path.count {
             derived = deriveChildNodePrivate(extendedKey: derived, index: bip44Path[i], g: g)
         }
 
-        return isPrivate ? derived : SodiumHelper.scalarMultEd25519BaseNoClamp(derived.subdata(in: 0 ..< ED25519_SCALAR_SIZE)) + derived.subdata(in: 64 ..< 96)
+        return isPrivate ? derived : SodiumHelper.scalarMultEd25519BaseNoClamp(derived.subdata(in: 0 ..< ED25519_SCALAR_SIZE)) + derived.subdata(in: 2 * CHAIN_CODE_SIZE ..< 3 * CHAIN_CODE_SIZE)
     }
 
     public func keyGen(
