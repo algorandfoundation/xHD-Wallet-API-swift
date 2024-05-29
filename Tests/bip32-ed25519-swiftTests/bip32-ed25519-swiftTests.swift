@@ -240,6 +240,25 @@ final class Bip32Ed25519Tests: XCTestCase {
         }
     }
 
+    func testDeriveChildNodePublicHardenedIndex() throws {
+        let seed = try Mnemonic.deterministicSeedString(from: "salon zoo engage submit smile frost later decide wing sight chaos renew lizard rely canal coral scene hobby scare step bus leaf tobacco slice")
+        guard let data = Data(hexString: seed) else {
+            return
+        }
+
+        let bip44Path: [UInt32] = [c!.harden(44), c!.harden(283), c!.harden(0), 0]
+
+        let walletRoot = c!.deriveKey(
+            rootKey: c!.fromSeed(data),
+            bip44Path: bip44Path,
+            isPrivate: false,
+            derivationType: BIP32DerivationType.Peikert
+        )
+
+        // should fail to derive public keys with a hardened index
+        XCTAssertThrowsError(try c!.deriveChildNodePublic(extendedKey: walletRoot, index: c!.harden(UInt32(0)), g: BIP32DerivationType.Peikert))
+    }
+
     func testKeyGeneration() throws {
         let testVectors: [((KeyContext, UInt32, UInt32, UInt32), Data)] = [
             // derive key m'/44'/283'/0'/0/0
