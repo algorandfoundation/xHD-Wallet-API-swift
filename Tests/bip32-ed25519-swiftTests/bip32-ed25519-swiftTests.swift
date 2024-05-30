@@ -212,6 +212,7 @@ final class Bip32Ed25519Tests: XCTestCase {
         let account: UInt32 = 0
         let change: UInt32 = 0
 
+        // hardened change level
         let bip44Path: [UInt32] = [c!.harden(44), c!.harden(283), c!.harden(0), c!.harden(0)]
 
         let walletRoot = c!.deriveKey(
@@ -221,21 +222,14 @@ final class Bip32Ed25519Tests: XCTestCase {
             derivationType: BIP32DerivationType.Peikert
         )
 
-        // should be able to derive all public keys from this root without knowing private information
-        // since these are SOFTLY derived
-
         let numPublicKeysToDerive = 10
         for i in 0 ..< numPublicKeysToDerive {
-            // assuming in a third party that only has public information
-            // I'm provided with the wallet level m'/44'/283'/0'/0 root [public, chaincode]
-            // no private information is shared
-            // i can SOFTLY derive N public keys / addresses from this root
             let derivedKey = try c!.deriveChildNodePublic(extendedKey: walletRoot, index: UInt32(i), g: BIP32DerivationType.Peikert)
             // Deriving from my own wallet where i DO have private information
             let myKey = c!.keyGen(context: context, account: account, change: change, keyIndex: UInt32(i), derivationType: BIP32DerivationType.Peikert)
 
-            // they should match
-            // derivedKey.subarray(0, 32) ==  public key (excluding chaincode)
+            // they should NOT match  since the `change` level (as part of BIP44) was hardened
+            // derivedKey.prefix(32) ==  public key (excluding chaincode)
             XCTAssertNotEqual(derivedKey.prefix(32), myKey)
         }
     }
