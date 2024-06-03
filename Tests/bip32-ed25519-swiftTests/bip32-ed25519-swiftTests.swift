@@ -176,29 +176,23 @@ final class Bip32Ed25519Tests: XCTestCase {
 
         let bip44Path: [UInt32] = [c!.harden(44), c!.harden(283), c!.harden(0), 0]
 
-        let walletRoot = c!.deriveKey(
-            rootKey: c!.fromSeed(data),
-            bip44Path: bip44Path,
-            isPrivate: false,
-            derivationType: BIP32DerivationType.Peikert
-        )
+        let derivationTypes: [BIP32DerivationType] = [.Khovratovich, .Peikert]
 
-        // should be able to derive all public keys from this root without knowing private information
-        // since these are SOFTLY derived
+        for derivationType in derivationTypes {
+            let walletRoot = c!.deriveKey(
+                rootKey: c!.fromSeed(data),
+                bip44Path: bip44Path,
+                isPrivate: false,
+                derivationType: derivationType
+            )
 
-        let numPublicKeysToDerive = 10
-        for i in 0 ..< numPublicKeysToDerive {
-            // assuming in a third party that only has public information
-            // I'm provided with the wallet level m'/44'/283'/0'/0 root [public, chaincode]
-            // no private information is shared
-            // i can SOFTLY derive N public keys / addresses from this root
-            let derivedKey = try c!.deriveChildNodePublic(extendedKey: walletRoot, index: UInt32(i), g: BIP32DerivationType.Peikert)
-            // Deriving from my own wallet where i DO have private information
-            let myKey = c!.keyGen(context: context, account: account, change: change, keyIndex: UInt32(i), derivationType: BIP32DerivationType.Peikert)
+            let numPublicKeysToDerive = 10
+            for i in 0 ..< numPublicKeysToDerive {
+                let derivedKey = try c!.deriveChildNodePublic(extendedKey: walletRoot, index: UInt32(i), g: derivationType)
+                let myKey = c!.keyGen(context: context, account: account, change: change, keyIndex: UInt32(i), derivationType: derivationType)
 
-            // they should match
-            // derivedKey.subarray(0, 32) ==  public key (excluding chaincode)
-            XCTAssertEqual(derivedKey.prefix(32), myKey)
+                XCTAssertEqual(derivedKey.prefix(32), myKey, "The derived key does not match the expected key for derivation type \(derivationType)")
+            }
         }
     }
 
