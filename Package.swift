@@ -34,6 +34,7 @@ let package = Package(
                 .product(name: "JSONSchema", package: "JSONSchema.swift"),
                 .product(name: "MessagePack", package: "MessagePack.swift"),
                 .product(name: "Sodium", package: "swift-sodium-full"),
+                .product(name: "MnemonicSwift", package: "MnemonicSwift")
             ],
             plugins: [
                 .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLint"),
