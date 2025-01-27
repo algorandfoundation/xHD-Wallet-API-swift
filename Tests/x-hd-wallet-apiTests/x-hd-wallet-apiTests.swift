@@ -16,9 +16,9 @@
  */
 
 import BigInt
-@testable import x_hd_wallet_api
 import MessagePack
 import MnemonicSwift
+@testable import x_hd_wallet_api
 import XCTest
 
 enum MyError: Error {

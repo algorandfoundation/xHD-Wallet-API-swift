@@ -16,7 +16,11 @@ cp git-hooks/* .git/hooks/
 
 ## How to Use
 
-NOTE: In the example below we are using the library MnemonicSwift for BIP-39 support. Essentially it can be used to turn a mnemonic of 24 words (corresponding to an _entropy_) into a seed, by running it through a PBKDF2 in accordance with [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki#from-mnemonic-to-seed). You are free to pick another library or use another method to produce the seed, but BIP-39 is an industry standard.
+In the example below we are using the library MnemonicSwift for BIP-39 support. Essentially it can be used to turn a mnemonic of 24 words (corresponding to an _entropy_) into a derived seed, by running it through a PBKDF2 in accordance with [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki#from-mnemonic-to-seed). You are free to pick another library or use another method to produce the seed, but BIP-39 is an industry standard.
+
+Note: MnemonicSwift can be used to randomly generate words and transform them into the derived seed. A derived seed can not be reversed into the mnemonic. Unfortunately, MnemonicSwift can currently not be used to to transform the 24 words into the entropy bytes (from which the bytes could then).
+
+That means that if you want to show the user their 24 words, you will need to store them as a string (and not as entropy bytes). From a security perspective it does not make things more or less secure.
 
 To initialize a wallet (using MnemmonicSwift for BIP-39 support, which you can import using your own package manager) from a seed phrase:
 
